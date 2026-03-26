@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, Edit, AlertCircle, Home, ChevronRight } from 'lucide-react';
+import { Plus, Edit, AlertCircle, Home, ChevronRight, ChevronLeft } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import PackageFormModal from '../../components/forms/PackageFormModal';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+
+const ITEMS_PER_PAGE = 10;
 
 const VIPPackageManagement = () => {
   const [packages, setPackages] = useState([]);
@@ -13,6 +15,7 @@ const VIPPackageManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentPackage, setCurrentPackage] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
   // Fetch all packages
@@ -61,6 +64,10 @@ const VIPPackageManagement = () => {
     });
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+  };
+
   const handleToggleStatus = async (pkg) => {
     try {
       // Build query parameters
@@ -96,6 +103,17 @@ const VIPPackageManagement = () => {
       fetchPackages();
     } catch (err) {
       toast.error(err.message);
+    }
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(packages.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedPackages = packages.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
   };
 
@@ -147,77 +165,115 @@ const VIPPackageManagement = () => {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên gói</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kỹ năng</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thời hạn</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {packages.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td colSpan="8" className="px-6 py-4 text-center text-sm text-gray-500">
-                      Không tìm thấy gói dịch vụ nào. Hãy tạo gói đầu tiên của bạn!
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Tên gói</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Kỹ năng</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Thời hạn</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Giá</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Trạng thái</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ngày tạo</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Hành động</th>
                   </tr>
-                ) : (
-                  packages.map((pkg) => (
-                    <tr key={pkg.package_id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{pkg.name}</div>
-
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {pkg.package_type === 'all_skills' ? 'Tất cả kỹ năng' : 'Một kỹ năng'}
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {pkg.duration_months} {pkg.duration_months === 1 ? 'tháng' : 'tháng'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${pkg.price.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                          {pkg.is_active ? 'Hoạt động' : 'Không hoạt động'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(pkg.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => handleEditPackage(pkg)}
-                            className="p-1 text-violet-600 hover:text-violet-900 rounded-md hover:bg-violet-50"
-                            title="Chỉnh sửa gói"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(pkg)}
-                            className={`p-1 rounded-md ${pkg.is_active
-                                ? 'text-red-600 hover:text-red-900 hover:bg-red-50'
-                                : 'text-green-600 hover:text-green-900 hover:bg-green-50'
-                              }`}
-                            title={pkg.is_active ? 'Vô hiệu hóa gói' : 'Kích hoạt gói'}
-                          >
-                            {pkg.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                          </button>
-                        </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedPackages.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                        Không tìm thấy gói dịch vụ nào. Hãy tạo gói đầu tiên của bạn!
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    paginatedPackages.map((pkg) => (
+                      <tr key={pkg.package_id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{pkg.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {pkg.package_type === 'all_skills' ? 'Tất cả kỹ năng' : 'Một kỹ năng'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {pkg.duration_months} tháng
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatPrice(pkg.price)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                            {pkg.is_active ? 'Hoạt động' : 'Không hoạt động'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(pkg.created_at)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => handleEditPackage(pkg)}
+                              className="p-1 text-violet-600 hover:text-violet-900 rounded-md hover:bg-violet-50"
+                              title="Chỉnh sửa gói"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(pkg)}
+                              className={`px-2 py-1 rounded-md text-xs font-medium ${pkg.is_active
+                                  ? 'text-red-600 hover:text-red-900 hover:bg-red-50'
+                                  : 'text-green-600 hover:text-green-900 hover:bg-green-50'
+                                }`}
+                              title={pkg.is_active ? 'Vô hiệu hóa gói' : 'Kích hoạt gói'}
+                            >
+                              {pkg.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <p className="text-sm text-gray-500">
+                  Hiển thị {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, packages.length)} / {packages.length} gói
+                </p>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-md text-gray-400 hover:text-violet-600 hover:bg-violet-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                        page === currentPage
+                          ? 'bg-violet-600 text-white'
+                          : 'text-gray-600 hover:bg-violet-50 hover:text-violet-600'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-md text-gray-400 hover:text-violet-600 hover:bg-violet-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
