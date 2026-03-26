@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, Edit, AlertCircle, Home, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Plus, Edit, AlertCircle, Home, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import PackageFormModal from '../../components/forms/PackageFormModal';
 import 'react-toastify/dist/ReactToastify.css';
@@ -106,6 +106,29 @@ const VIPPackageManagement = () => {
     }
   };
 
+  const handleDeletePackage = async (pkg) => {
+    if (!window.confirm(`Bạn có chắc muốn xóa gói "${pkg.name}"?`)) return;
+    
+    try {
+      const response = await fetch(`${API_BASE}/admin/vip/packages/${pkg.package_id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Không thể xóa gói');
+      }
+
+      toast.success('Đã xóa gói thành công!');
+      fetchPackages();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   // Pagination logic
   const totalPages = Math.ceil(packages.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -188,8 +211,8 @@ const VIPPackageManagement = () => {
                   ) : (
                     paginatedPackages.map((pkg) => (
                       <tr key={pkg.package_id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{pkg.name}</div>
+                        <td className="px-6 py-4" style={{ maxWidth: '200px' }}>
+                          <div className="text-sm font-medium text-gray-900 truncate" title={pkg.name}>{pkg.name}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {pkg.package_type === 'all_skills' ? 'Tất cả kỹ năng' : 'Một kỹ năng'}
@@ -227,6 +250,13 @@ const VIPPackageManagement = () => {
                               title={pkg.is_active ? 'Vô hiệu hóa gói' : 'Kích hoạt gói'}
                             >
                               {pkg.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                            </button>
+                            <button
+                              onClick={() => handleDeletePackage(pkg)}
+                              className="px-2 py-1 rounded-md text-xs font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
+                              title="Xóa gói"
+                            >
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>
