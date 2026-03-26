@@ -1,0 +1,166 @@
+@router.get("/dashboard/notifications", response_model=List[dict])
+async def get_admin_notifications(
+    days: int = 30,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Get recent notifications for admin dashboard about student activities"""
+    
+    # Get read notifications for this admin
+    read_notifications = db.query(AdminNotificationRead.notification_id)\
+        .filter(AdminNotificationRead.admin_id == current_admin.user_id)\
+        .all()
+    read_notification_ids = [record[0] for record in read_notifications]
+    
+    # Get recent exam completions
+    recent_completions = db.query(ExamResult, User, Exam)\
+        .join(User, User.user_id == ExamResult.user_id)\
+        .join(Exam, Exam.exam_id == ExamResult.exam_id)\
+        .filter(
+            ExamResult.completion_date >= datetime.utcnow() - timedelta(days=days)
+        )\
+        .order_by(ExamResult.completion_date.desc())\
+        .limit(50)\
+        .all()
+    
+    # Get recent writing submissions
+    recent_writings = db.query(WritingAnswer, User, WritingTask, Exam)\
+        .join(User, User.user_id == WritingAnswer.user_id)\
+        .join(WritingTask, WritingTask.task_id == WritingAnswer.task_id)\
+        .join(Exam, Exam.exam_id == WritingTask.test_id)\
+        .filter(
+            WritingAnswer.created_at >= datetime.utcnow() - timedelta(days=days)
+        )\
+        .order_by(WritingAnswer.created_at.desc())\
+        .limit(50)\
+        .all()
+    
+    # Get recent speaking submissions
+    recent_speaking = db.query(SpeakingAnswer, User, SpeakingQuestion, SpeakingTopic)\
+        .join(User, User.user_id == SpeakingAnswer.user_id)\
+        .join(SpeakingQuestion, SpeakingQuestion.question_id == SpeakingAnswer.question_id)\
+        .join(SpeakingTopic, SpeakingTopic.topic_id == SpeakingQuestion.topic_id)\
+        .filter(
+            SpeakingAnswer.created_at >= datetime.utcnow() - timedelta(days=days)
+        )\
+        .order_by(SpeakingAnswer.created_at.desc())\
+        .limit(50)\
+        .all()
+
+    # Get recent transactions
+    recent_transactions = db.query(PackageTransaction, User, VIPPackage)\
+        .join(User, User.user_id == PackageTransaction.user_id)\
+        .join(VIPPackage, VIPPackage.package_id == PackageTransaction.package_id)\
+        .filter(
+            PackageTransaction.created_at >= datetime.utcnow() - timedelta(days=days),
+            PackageTransaction.status == "pending"
+        )\
+        .order_by(PackageTransaction.created_at.desc())\
+        .limit(50)\
+        .all()
+    
+    notifications = []
+    
+    # Add transaction notifications
+    for transaction, user, package in recent_transactions:
+        notifications.append({
+            "id": f"transaction_{transaction.transaction_id}",
+            "type": "vip_transaction",
+            "title": f"New VIP Package Purchase",
+            "message": f"{user.username} purchased {package.name} (${float(transaction.amount)})",
+            "timestamp": transaction.created_at,
+            "user_id": user.user_id,
+            "transaction_id": transaction.transaction_id,
+            "package_id": package.package_id,
+            "payment_method": transaction.payment_method,
+            "bank_transfer_image": transaction.bank_transfer_image,
+            "amount": float(transaction.amount),
+            "is_read": f"transaction_{transaction.transaction_id}" in read_notification_ids
+        })
+    
+    # Add exam completion notifications
+    for result, user, exam in recent_completions:
+        notifications.append({
+            "id": f"exam_{result.result_id}",
+            "type": "exam_completion",
+            "title": f"{user.username} completed {exam.title}",
+            "message": f"Student scored {result.total_score} on the exam",
+            "timestamp": result.completion_date,
+            "user_id": user.user_id,
+            "exam_id": exam.exam_id,
+            "result_id": result.result_id,
+            "is_read": f"exam_{result.result_id}" in read_notification_ids
+        })
+    
+    # Add writing submission notifications
+    for answer, user, task, exam in recent_writings:
+        notifications.append({
+            "id": f"writing_{answer.answer_id}",
+            "type": "writing_submission",
+            "title": f"{user.username} submitted writing task",
+            "message": f"Part {task.part_number} of {exam.title} needs review",
+            "timestamp": answer.created_at,
+            "user_id": user.user_id,
+            "exam_id": exam.exam_id,
+            "answer_id": answer.answer_id,
+            "is_read": f"writing_{answer.answer_id}" in read_notification_ids
+        })
+    
+    # Add speaking submission notifications
+    for answer, user, question, topic in recent_speaking:
+        notifications.append({
+            "id": f"speaking_{answer.answer_id}",
+            "type": "speaking_submission",
+            "title": f"{user.username} submitted speaking answer",
+            "message": f"Topic: {topic.title} needs review",
+            "timestamp": answer.created_at,
+            "user_id": user.user_id,
+            "topic_id": topic.topic_id,
+            "answer_id": answer.answer_id,
+            "is_read": f"speaking_{answer.answer_id}" in read_notification_ids
+        })
+    
+    # Sort all notifications by timestamp (newest first)
+    notifications.sort(key=lambda x: x["timestamp"], reverse=True)
+    
+    return notifications
+@router.post("/notifications/mark-read", response_model=dict)
+async def mark_notifications_read(
+    data: NotificationMarkRead,
+    current_admin = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Mark notifications as read by the admin"""
+    
+    # Create a new AdminNotificationRead record for each notification
+    for notification_id in data.notification_ids:
+        # Parse the notification ID to get the type and actual ID
+        parts = notification_id.split('_')
+        if len(parts) != 2:
+            continue
+            
+        notification_type, item_id = parts
+        
+        # Check if this notification is already marked as read
+        existing = db.query(AdminNotificationRead).filter(
+            AdminNotificationRead.admin_id == current_admin.user_id,
+            AdminNotificationRead.notification_id == notification_id
+        ).first()
+        
+        if not existing:
+            # Create a new read record
+            read_record = AdminNotificationRead(
+                admin_id=current_admin.user_id,
+                notification_id=notification_id,
+                notification_type=notification_type,
+                item_id=item_id,
+                read_at=datetime.utcnow()
+            )
+            db.add(read_record)
+    
+    db.commit()
+    
+    return {
+        "message": f"Marked {len(data.notification_ids)} notifications as read",
+        "notification_ids": data.notification_ids
+    }
