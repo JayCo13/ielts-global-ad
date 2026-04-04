@@ -512,7 +512,7 @@ const PendingTransactions = () => {
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700/30 p-2.5 rounded-md">
                       <p className="text-md font-medium text-gray-500 dark:text-gray-400">Số Tiền:</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentTransaction.amount * 23000)}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(currentTransaction.amount)}</p>
                     </div>
                   </div>
 

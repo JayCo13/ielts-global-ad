@@ -22,35 +22,35 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
 
     // Name validation
     if (!formData.name.trim()) {
-      newErrors.name = 'Tên gói không được để trống';
+      newErrors.name = 'Package name is required';
     } else if (formData.name.length < 3) {
-      newErrors.name = 'Tên gói phải có ít nhất 3 ký tự';
+      newErrors.name = 'Package name must be at least 3 characters';
     } else if (formData.name.length > 50) {
-      newErrors.name = 'Tên gói không được vượt quá 50 ký tự';
+      newErrors.name = 'Package name must not exceed 50 characters';
     }
 
     // Duration validation
     if (!formData.duration_months || formData.duration_months < 1) {
-      newErrors.duration_months = 'Thời hạn phải lớn hơn hoặc bằng 1 tháng';
+      newErrors.duration_months = 'Duration must be at least 1 month';
     } else if (formData.duration_months > 36) {
-      newErrors.duration_months = 'Thời hạn không được vượt quá 36 tháng';
+      newErrors.duration_months = 'Duration must not exceed 36 months';
     }
 
-    // Price validation for VND
+    // Price validation for USD
     if (formData.price < 0) {
-      newErrors.price = 'Giá không được âm';
-    } else if (formData.price > 50000000) { // Increased max price for VND
-      newErrors.price = 'Giá không được vượt quá 50,000,000 VND';
+      newErrors.price = 'Price must not be negative';
+    } else if (formData.price > 500) {
+      newErrors.price = 'Price must not exceed $500 USD';
     }
 
     // Description validation
     if (formData.description && formData.description.length > 1000) {
-      newErrors.description = 'Mô tả không được vượt quá 1000 ký tự';
+      newErrors.description = 'Description must not exceed 1000 characters';
     }
 
     // Skill type validation
     if (formData.package_type === 'single_skill' && !formData.skill_type) {
-      newErrors.skill_type = 'Vui lòng chọn loại kỹ năng';
+      newErrors.skill_type = 'Please select a skill type';
     }
 
     setErrors(newErrors);
@@ -118,10 +118,10 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Không thể lưu gói dịch vụ');
+        throw new Error(errorData.detail || 'Failed to save package');
       }
 
-      toast.success(isCreate ? 'Tạo gói dịch vụ thành công!' : 'Cập nhật gói dịch vụ thành công!');
+      toast.success(isCreate ? 'Package created successfully!' : 'Package updated successfully!');
       onSuccess();
     } catch (err) {
       setError(err.message);
@@ -136,7 +136,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-semibold text-gray-800">
-            {isCreate ? 'Tạo Gói Dịch Vụ Mới' : 'Chỉnh Sửa Gói Dịch Vụ'}
+            {isCreate ? 'Create New Package' : 'Edit Package'}
           </h2>
           <button 
             onClick={onClose}
@@ -158,7 +158,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tên gói*
+              Package Name*
             </label>
             <input
               type="text"
@@ -167,7 +167,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               onChange={handleChange}
               required
               className={`w-full px-3 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent`}
-              placeholder="VD: Gói Cao Cấp Hàng Tháng"
+              placeholder="e.g. Premium Monthly Plan"
             />
             {errors.name && (
               <p className="mt-1 text-xs text-red-500">{errors.name}</p>
@@ -176,7 +176,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Loại gói*
+              Package Type*
             </label>
             <select
               name="package_type"
@@ -185,15 +185,15 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
             >
-              <option value="all_skills">Tất cả kỹ năng</option>
-              <option value="single_skill">Một kỹ năng</option>
+              <option value="all_skills">All Skills</option>
+              <option value="single_skill">Single Skill</option>
             </select>
           </div>
           
           {formData.package_type === 'single_skill' && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Loại kỹ năng*
+                Skill Type*
               </label>
               <select
                 name="skill_type"
@@ -202,17 +202,17 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
               >
-                <option value="">Chọn kỹ năng</option>
-                <option value="reading">Đọc</option>
-                <option value="writing">Viết</option>
-                <option value="listening">Nghe</option>
+                <option value="">Select skill</option>
+                <option value="reading">Reading</option>
+                <option value="writing">Writing</option>
+                <option value="listening">Listening</option>
               </select>
             </div>
           )}
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Thời hạn (tháng)*
+              Duration (months)*
             </label>
             <input
               type="number"
@@ -230,7 +230,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Giá (VND)*
+              Price (USD)*
             </label>
             <div className="relative">
               <input
@@ -240,11 +240,11 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
                 onChange={handleChange}
                 required
                 min="0"
-                step="1000"
+                step="0.01"
                 className={`w-full px-3 py-2 border ${errors.price ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent pr-12`}
               />
               <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                VND
+                USD
               </span>
             </div>
             {errors.price && (
@@ -252,14 +252,14 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
             )}
             {formData.price > 0 && (
               <p className="mt-1 text-xs text-gray-500">
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(formData.price)}
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(formData.price)}
               </p>
             )}
           </div>
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mô tả
+              Description
             </label>
             <textarea
               name="description"
@@ -267,7 +267,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               onChange={handleChange}
               rows="3"
               className={`w-full px-3 py-2 border ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent`}
-              placeholder="Mô tả gói dịch vụ (không bắt buộc)"
+              placeholder="Package description (optional)"
             />
             {errors.description && (
               <p className="mt-1 text-xs text-red-500">{errors.description}</p>
@@ -284,7 +284,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
             />
             <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
-              Hoạt động
+              Active
             </label>
           </div>
           
@@ -294,7 +294,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               onClick={onClose}
               className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Hủy bỏ
+              Cancel
             </button>
             <button
               type="submit"
@@ -304,12 +304,12 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                  Đang lưu...
+                  Saving...
                 </>
               ) : (
                 <>
                   <Check size={18} className="mr-2" />
-                  {isCreate ? 'Tạo gói' : 'Cập nhật gói'}
+                  {isCreate ? 'Create Package' : 'Update Package'}
                 </>
               )}
             </button>
