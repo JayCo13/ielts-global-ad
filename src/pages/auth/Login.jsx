@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import loginImage from '../../images/thiieltstrenmaytinh.png';
+import loginImage from '../../images/logo-ielts-global.png';
 import API_BASE from '../../config/api';
 
 const LoginForm = () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import loginImage from '../images/thiieltstrenmaytinh.png';
+import loginImage from '../images/logo-ielts-global.png';
 import SidebarLinkGroup from "./SidebarLinkGroup";
 
 function Sidebar({
