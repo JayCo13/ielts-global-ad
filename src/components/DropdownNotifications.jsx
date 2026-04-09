@@ -4,6 +4,7 @@ import Transition from '../utils/Transition';
 import { format } from 'date-fns';
 import { Bell, BookOpen, DollarSign, MessageSquare, Mic, CheckCircle, XCircle, Clock } from 'lucide-react';
 import API_BASE from '../config/api';
+import fetchWithTimeout from '../utils/fetchWithTimeout';
 
 function DropdownNotifications({ align }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -79,7 +80,7 @@ function DropdownNotifications({ align }) {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/admin/dashboard/notifications`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/dashboard/notifications`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -128,7 +129,7 @@ function DropdownNotifications({ align }) {
         if (unreadNotifications.length > 0) {
           console.log('Đánh dấu đã đọc:', unreadNotifications);
 
-          const response = await fetch(`${API_BASE}/admin/notifications/mark-read`, {
+          const response = await fetchWithTimeout(`${API_BASE}/admin/notifications/mark-read`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

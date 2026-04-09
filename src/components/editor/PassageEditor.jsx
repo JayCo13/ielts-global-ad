@@ -1,6 +1,7 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { useRef, useState, useEffect } from 'react';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const PassageEditor = ({ value, onChange }) => {
     const editorRef = useRef(null);
@@ -44,7 +45,7 @@ const PassageEditor = ({ value, onChange }) => {
     };
     const fetchApiKey = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/action/update-keys`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-keys`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }

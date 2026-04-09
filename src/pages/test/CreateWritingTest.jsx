@@ -7,6 +7,7 @@ import Split from 'react-split';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const CreateWritingTest = () => {
     const TASK_TYPES = [
@@ -51,7 +52,7 @@ const CreateWritingTest = () => {
         }
     
         try {
-            const response = await fetch(`${API_BASE}/admin/initialize-writing-test`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/initialize-writing-test`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ const CreateWritingTest = () => {
         }
     
         try {
-            const response = await fetch(`${API_BASE}/admin/writing-test/${examId}/part`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/writing-test/${examId}/part`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

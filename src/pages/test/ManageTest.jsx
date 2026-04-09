@@ -6,6 +6,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import EditAccessDialog from '../../components/dialogs/EditAccessDialog';
 import { Toaster, toast } from 'react-hot-toast';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const ManageTest = () => {
     const [tests, setTests] = useState([]);
@@ -42,7 +43,7 @@ const [loading, setLoading] = useState(false);
 
     const fetchTests = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/dashboard/exams?skip=0&limit=10000`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/dashboard/exams?skip=0&limit=10000`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -74,7 +75,7 @@ const [loading, setLoading] = useState(false);
     };
     const handleUpdateAccess = async (examId) => {
         try {
-            const response = await fetch(`${API_BASE}/admin/ielts-exams/${examId}/access`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/ielts-exams/${examId}/access`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -111,7 +112,7 @@ const [loading, setLoading] = useState(false);
     };
     const handleDelete = async (examId) => {
         try {
-            const response = await fetch(`${API_BASE}/admin/delete-test/${examId}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/delete-test/${examId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -132,7 +133,7 @@ const [loading, setLoading] = useState(false);
         try {
             setLoading(true);
 
-            const response = await fetch(`${API_BASE}/admin/ielts-exam/${test.exam_id}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/ielts-exam/${test.exam_id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -177,7 +178,7 @@ const [loading, setLoading] = useState(false);
     };
     const handleActivate = async (examId) => {
         try {
-            const response = await fetch(`${API_BASE}/admin/ielts-exams/${examId}/status?active=true`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/ielts-exams/${examId}/status?active=true`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -198,7 +199,7 @@ const [loading, setLoading] = useState(false);
     };
     const handleDeactivate = async (examId) => {
         try {
-            const response = await fetch(`${API_BASE}/admin/ielts-exams/${examId}/status?active=false`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/ielts-exams/${examId}/status?active=false`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -522,7 +523,7 @@ const [loading, setLoading] = useState(false);
                                                         setSampleExamId(test.exam_id);
                                                         setIsSampleDialogOpen(true);
                                                         try {
-                                                            const res = await fetch(`${API_BASE}/admin/writing-test/${test.exam_id}/details`, {
+                                                            const res = await fetchWithTimeout(`${API_BASE}/admin/writing-test/${test.exam_id}/details`, {
                                                                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                                                             });
                                                             if (res.ok) {

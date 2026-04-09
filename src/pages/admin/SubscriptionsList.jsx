@@ -4,6 +4,7 @@ import { AlertCircle, RefreshCw, ChevronLeft, ChevronRight, Search, Filter, X, C
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const SubscriptionsList = () => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -19,7 +20,7 @@ const SubscriptionsList = () => {
   const fetchSubscriptions = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/admin/vip/subscriptions`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/vip/subscriptions`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }

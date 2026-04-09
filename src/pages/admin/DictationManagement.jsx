@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from '../../partials/Sidebar';
 import Header from '../../partials/Header';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const WORDS_PER_PAGE = 5;
 
@@ -27,7 +28,7 @@ function DictationManagement() {
 
     const fetchUnits = useCallback(async () => {
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/units`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/units`, {
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
             if (res.ok) {
@@ -43,7 +44,7 @@ function DictationManagement() {
 
     const fetchUnitWords = useCallback(async (unitId) => {
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/units/${unitId}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/units/${unitId}`, {
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
             if (res.ok) {
@@ -70,7 +71,7 @@ function DictationManagement() {
         if (!unitName.trim()) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/units`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/units`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -94,7 +95,7 @@ function DictationManagement() {
         if (!unitName.trim()) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/units/${editingUnit.unit_id}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/units/${editingUnit.unit_id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ function DictationManagement() {
         if (!window.confirm('Bạn có chắc muốn xóa bài này?')) return;
 
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/units/${unitId}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/units/${unitId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
@@ -141,7 +142,7 @@ function DictationManagement() {
 
         setSaving(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/units/${selectedUnit.unit_id}/words`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/units/${selectedUnit.unit_id}/words`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -164,7 +165,7 @@ function DictationManagement() {
 
     const handleDeleteWord = async (wordId) => {
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/words/${wordId}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/words/${wordId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
@@ -180,7 +181,7 @@ function DictationManagement() {
 
     const handleToggleImportant = async (wordId, currentValue) => {
         try {
-            const res = await fetch(`${API_BASE}/admin/dictation/words/${wordId}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/dictation/words/${wordId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

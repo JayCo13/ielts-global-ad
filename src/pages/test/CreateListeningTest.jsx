@@ -12,6 +12,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 import 'react-grid-layout/css/styles.css';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const CreateListeningTest = () => {
     const QUESTION_TYPES = [
@@ -172,7 +173,7 @@ const CreateListeningTest = () => {
         if (!validateInitialization()) return;
 
         try {
-            const response = await fetch(`${API_BASE}/admin/initialize-listening-test`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/initialize-listening-test`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -232,7 +233,7 @@ const CreateListeningTest = () => {
             formData.append('transcript', editorContent);
             formData.append('questions_json', JSON.stringify(formattedQuestions));
 
-            const response = await fetch(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`

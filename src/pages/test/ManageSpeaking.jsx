@@ -6,6 +6,7 @@ import { Dialog, DialogTitle, Transition, TransitionChild } from '@headlessui/re
 import { Toaster, toast } from 'react-hot-toast';
 import EditSpeakingAccessDialog from '../../components/dialogs/EditSpeakingAccessDialog';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const ManageSpeaking = () => {
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ const ManageSpeaking = () => {
     const fetchMaterials = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_BASE}/admin/speaking/materials`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/speaking/materials`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -50,7 +51,7 @@ const ManageSpeaking = () => {
         if (!materialToDelete) return;
 
         try {
-            const response = await fetch(`${API_BASE}/admin/speaking/materials/${materialToDelete.material_id}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/speaking/materials/${materialToDelete.material_id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -88,7 +89,7 @@ const ManageSpeaking = () => {
     const handleUpdateAccess = async () => {
         if (!selectedMaterialForAccess) return;
         try {
-            const response = await fetch(`${API_BASE}/admin/speaking/materials/${selectedMaterialForAccess.material_id}/access`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/speaking/materials/${selectedMaterialForAccess.material_id}/access`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

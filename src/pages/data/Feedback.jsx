@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Edit, AlertCircle, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const Feedback = () => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -27,7 +28,7 @@ const Feedback = () => {
 
   const fetchFeedbacks = async () => {
     try {
-      const response = await fetch(`${API_BASE}/admin/action/feedbacks`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/feedbacks`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -74,7 +75,7 @@ const Feedback = () => {
         image_url: imageUrl || null
       };
 
-      const response = await fetch(`${API_BASE}/admin/action/feedback/${feedbackId}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/feedback/${feedbackId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ const Feedback = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE}/admin/action/feedback/${feedbackId}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/feedback/${feedbackId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -132,7 +133,7 @@ const Feedback = () => {
     formData.append('image', file);
 
     try {
-      const response = await fetch(`${API_BASE}/admin/action/upload-feedback-image`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/upload-feedback-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -170,7 +171,7 @@ const Feedback = () => {
         image_url: imageUrl || null
       };
 
-      const response = await fetch(`${API_BASE}/admin/action/feedback`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

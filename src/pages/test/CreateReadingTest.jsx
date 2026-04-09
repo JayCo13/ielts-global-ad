@@ -11,6 +11,7 @@ import PassageEditor from '../../components/editor/PassageEditor';
 import QuestionEditor from '../../components/editor/QuestionEditor';
 import RichTextEditor from '../../components/editor/RichTextEditor';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const CreateReadingTest = () => {
     const QUESTION_TYPES = [
@@ -67,7 +68,7 @@ const CreateReadingTest = () => {
     };
     const fetchApiKey = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/action/update-keys`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-keys`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -165,7 +166,7 @@ const CreateReadingTest = () => {
         if (!validateInitialization()) return;
 
         try {
-            const response = await fetch(`${API_BASE}/admin/reading/initialize-reading-test`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/reading/initialize-reading-test`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -224,7 +225,7 @@ const CreateReadingTest = () => {
             formData.append('question_content', questionsContent);
             formData.append('questions_json', JSON.stringify(questionsData));
 
-            const response = await fetch(`${API_BASE}/admin/reading/reading-test/${examId}/part/${partNumber}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${examId}/part/${partNumber}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`

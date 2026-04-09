@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import loginImage from '../../images/logo-ielts-global.png';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const LoginForm = () => {
     const [formData, setFormData] = useState({
@@ -71,7 +72,7 @@ const LoginForm = () => {
             formBody.append('username', formData.username);
             formBody.append('password', formData.password);
 
-            const response = await fetch(`${API_BASE}/login`, {
+            const response = await fetchWithTimeout(`${API_BASE}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

@@ -3,6 +3,7 @@ import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@
 import { Edit } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const EditSpeakingAccessDialog = ({
     isOpen,
@@ -20,7 +21,7 @@ const EditSpeakingAccessDialog = ({
 
     const fetchAccessTypes = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/speaking/materials/${materialId}/access`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/speaking/materials/${materialId}/access`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }

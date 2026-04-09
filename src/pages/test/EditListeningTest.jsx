@@ -13,6 +13,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import DescriptionDialog from '../../components/dialogs/DescriptionDialog';
 import RichTextEditor from '../../components/editor/RichTextEditor';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const EditListeningTest = () => {
     const QUESTION_TYPES = [
@@ -124,7 +125,7 @@ const EditListeningTest = () => {
                 part4_description: currentStep === 4 ? newDescription : null
             };
 
-            const response = await fetch(`${API_BASE}/admin/listening-test/${examId}/descriptions`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${examId}/descriptions`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -153,7 +154,7 @@ const EditListeningTest = () => {
 
     const handleTitleUpdate = async (newTitle) => {
         try {
-            const response = await fetch(`${API_BASE}/admin/listening-test/${examId}/title`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${examId}/title`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -184,7 +185,7 @@ const EditListeningTest = () => {
     const fetchTestData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_BASE}/admin/listening-test/${examId}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${examId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -216,7 +217,7 @@ const EditListeningTest = () => {
     const fetchPartData = async (partNumber) => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -383,7 +384,7 @@ const EditListeningTest = () => {
                 formData.append('transcript', editorContent);
                 formData.append('questions_json', JSON.stringify(formattedQuestions));
 
-                const response = await fetch(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}/update-with-audio`, {
+                const response = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}/update-with-audio`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -399,7 +400,7 @@ const EditListeningTest = () => {
                 formData.append('transcript', editorContent);
                 formData.append('questions_json', JSON.stringify(formattedQuestions));
 
-                const response = await fetch(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}/update`, {
+                const response = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${examId}/part/${partNumber}/update`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`

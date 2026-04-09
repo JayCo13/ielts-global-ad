@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Home, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Save, Headphones, BookOpen, Loader2, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const ManagePartTitles = () => {
     const [tests, setTests] = useState([]);
@@ -24,7 +25,7 @@ const ManagePartTitles = () => {
 
     const fetchTests = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/dashboard/exams?skip=0&limit=10000`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/dashboard/exams?skip=0&limit=10000`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -65,7 +66,7 @@ const ManagePartTitles = () => {
                 ? `${API_BASE}/admin/listening-test/${examId}/part-titles`
                 : `${API_BASE}/admin/reading/reading-test/${examId}/descriptions`;
 
-            const response = await fetch(endpoint, {
+            const response = await fetchWithTimeout(endpoint, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -135,7 +136,7 @@ const ManagePartTitles = () => {
                 ? `${API_BASE}/admin/listening-test/${examId}/part-titles`
                 : `${API_BASE}/admin/reading/reading-test/${examId}/descriptions`;
 
-            const response = await fetch(endpoint, {
+            const response = await fetchWithTimeout(endpoint, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,

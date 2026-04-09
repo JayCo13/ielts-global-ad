@@ -7,6 +7,7 @@ import Split from 'react-split';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const EditWritingTest = () => {
     const TASK_TYPES = [
@@ -29,7 +30,7 @@ const EditWritingTest = () => {
     });
      const fetchApiKey = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/action/update-keys`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-keys`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -57,7 +58,7 @@ const EditWritingTest = () => {
     }, []);
     const fetchTestDetails = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/writing-test/${examId}/details`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/writing-test/${examId}/details`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -121,7 +122,7 @@ const EditWritingTest = () => {
 
     const handleUpdateTest = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/writing-test/${examId}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/writing-test/${examId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -148,7 +149,7 @@ const EditWritingTest = () => {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/admin/writing-test/${examId}/part/${currentPart.part_number}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/writing-test/${examId}/part/${currentPart.part_number}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

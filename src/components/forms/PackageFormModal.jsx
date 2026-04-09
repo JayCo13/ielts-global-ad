@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AlertCircle, Check, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
   const [formData, setFormData] = useState({
@@ -109,7 +110,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
       // Append query parameters to URL
       url = `${url}?${params.toString()}`;
 
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method: isCreate ? 'POST' : 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`

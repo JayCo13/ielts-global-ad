@@ -11,6 +11,7 @@ import {
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const PendingTransactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -48,7 +49,7 @@ const PendingTransactions = () => {
   const fetchPendingTransactions = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/admin/vip/transactions/pending`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/vip/transactions/pending`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -101,7 +102,7 @@ const PendingTransactions = () => {
       formData.append('transaction_status', status === 'completed' ? 'completed' : 'reject'); // Changed from 'status' to 'transaction_status'
       formData.append('admin_note', adminNote);
 
-      const response = await fetch(`${API_BASE}/admin/vip/transactions/${currentTransaction.transaction_id}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/vip/transactions/${currentTransaction.transaction_id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`

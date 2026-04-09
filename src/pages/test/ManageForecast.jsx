@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Toaster, toast } from 'react-hot-toast';
 import { Home, ChevronRight, Filter, FileText, Headphones, BookOpen, Edit3, RotateCcw, Star, Search } from 'lucide-react';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const skillLabel = (types) => {
   if (!types || types.length === 0) return 'Unknown';
@@ -87,7 +88,7 @@ const ManageForecast = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE}/admin/dashboard/exams?skip=0&limit=10000`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/dashboard/exams?skip=0&limit=10000`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         });
         const data = await res.json();
@@ -104,7 +105,7 @@ const ManageForecast = () => {
   useEffect(() => {
     const fetchWritingMeta = async () => {
       try {
-        const res = await fetch(`${API_BASE}/admin/writing`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/writing`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         });
         const data = await res.json();
@@ -128,7 +129,7 @@ const ManageForecast = () => {
         const listeningTests = (Array.isArray(tests) ? tests : []).filter(t => (t.section_types || []).includes('listening'));
         const results = await Promise.all(listeningTests.map(async (t) => {
           try {
-            const res = await fetch(`${API_BASE}/admin/listening-test/${t.exam_id}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${t.exam_id}`, {
               headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
             });
             const data = await res.json();
@@ -154,7 +155,7 @@ const ManageForecast = () => {
         const readingTests = (Array.isArray(tests) ? tests : []).filter(t => (t.section_types || []).includes('reading'));
         const results = await Promise.all(readingTests.map(async (t) => {
           try {
-            const res = await fetch(`${API_BASE}/admin/reading/reading-test/${t.exam_id}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${t.exam_id}`, {
               headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
             });
             const data = await res.json();
@@ -236,7 +237,7 @@ const ManageForecast = () => {
     setCurrentSkill(skill);
     if (skill === 'listening') {
       try {
-        const res = await fetch(`${API_BASE}/admin/listening-test/${test.exam_id}`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${test.exam_id}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         });
         const data = await res.json();
@@ -256,7 +257,7 @@ const ManageForecast = () => {
     }
     if (skill === 'reading') {
       try {
-        const res = await fetch(`${API_BASE}/admin/reading/reading-test/${test.exam_id}`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${test.exam_id}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         });
         const data = await res.json();
@@ -282,7 +283,7 @@ const ManageForecast = () => {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/admin/writing`, {
+      const res = await fetchWithTimeout(`${API_BASE}/admin/writing`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
       });
       const data = await res.json();
@@ -299,7 +300,7 @@ const ManageForecast = () => {
     try {
       setSaving(true);
       if (currentSkill === 'writing') {
-        const res = await fetch(`${API_BASE}/admin/writing-task/${p.task_id}/forecast`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/writing-task/${p.task_id}/forecast`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -313,7 +314,7 @@ const ManageForecast = () => {
         }
         toast.success(`Saved Part ${p.part_number}`);
       } else if (currentSkill === 'listening') {
-        const res = await fetch(`${API_BASE}/admin/listening-test/${selectedTest.exam_id}/forecast`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${selectedTest.exam_id}/forecast`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -332,7 +333,7 @@ const ManageForecast = () => {
         }
         toast.success(`Saved Part ${p.part_number}`);
       } else if (currentSkill === 'reading') {
-        const res = await fetch(`${API_BASE}/admin/reading/reading-test/${selectedTest.exam_id}/forecast`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${selectedTest.exam_id}/forecast`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

@@ -3,6 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Home, ChevronRight, UserPlus } from 'lucide-react';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const CreateAccount = () => {
     const navigate = useNavigate();
@@ -18,7 +19,7 @@ const CreateAccount = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch(`${API_BASE}/create-student`, {
+            const response = await fetchWithTimeout(`${API_BASE}/create-student`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Home, ChevronRight, Save, ArrowLeft } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const EditSpeakingTest = () => {
     const { topicId } = useParams();
@@ -20,7 +21,7 @@ const EditSpeakingTest = () => {
         const fetchMaterial = async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`${API_BASE}/admin/speaking/materials/${topicId}`, {
+                const res = await fetchWithTimeout(`${API_BASE}/admin/speaking/materials/${topicId}`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
                 });
                 if (!res.ok) throw new Error('Failed to load speaking material');
@@ -53,7 +54,7 @@ const EditSpeakingTest = () => {
             formData.append('title', title);
             formData.append('part_type', partType);
             if (newPdf) formData.append('pdf_file', newPdf);
-            const res = await fetch(`${API_BASE}/admin/speaking/materials/${topicId}`, {
+            const res = await fetchWithTimeout(`${API_BASE}/admin/speaking/materials/${topicId}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
                 body: formData

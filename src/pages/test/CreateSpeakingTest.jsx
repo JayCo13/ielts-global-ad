@@ -4,6 +4,7 @@ import { ChevronRight, Home } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const CreateSpeakingTest = () => {
     const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ const CreateSpeakingTest = () => {
             formData.append('part_type', partType);
             formData.append('pdf_file', pdfFile);
 
-            const response = await fetch(`${API_BASE}/admin/speaking/materials`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/speaking/materials`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`

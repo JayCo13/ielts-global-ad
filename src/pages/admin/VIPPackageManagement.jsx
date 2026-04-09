@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import PackageFormModal from '../../components/forms/PackageFormModal';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -22,7 +23,7 @@ const VIPPackageManagement = () => {
   const fetchPackages = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/admin/vip/packages`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/vip/packages`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -87,7 +88,7 @@ const VIPPackageManagement = () => {
 
       const url = `${API_BASE}/admin/vip/packages/${pkg.package_id}?${params.toString()}`;
 
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -110,7 +111,7 @@ const VIPPackageManagement = () => {
     if (!window.confirm(`Bạn có chắc muốn xóa gói "${pkg.name}"?`)) return;
     
     try {
-      const response = await fetch(`${API_BASE}/admin/vip/packages/${pkg.package_id}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/vip/packages/${pkg.package_id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`

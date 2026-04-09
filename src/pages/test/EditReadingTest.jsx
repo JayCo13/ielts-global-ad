@@ -12,6 +12,7 @@ import QuestionEditor from '../../components/editor/QuestionEditor';
 import RichTextEditor from '../../components/editor/RichTextEditor';
 import DescriptionDialog from '../../components/dialogs/DescriptionDialog';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const EditReadingTest = () => {
     const { examId } = useParams();
@@ -76,7 +77,7 @@ const EditReadingTest = () => {
     }, [currentStep]);
     const handleDescriptionUpdate = async (newDescription) => {
         try {
-            const response = await fetch(`${API_BASE}/admin/update-description/${examId}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/update-description/${examId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -107,7 +108,7 @@ const EditReadingTest = () => {
     const fetchTestData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_BASE}/admin/reading/reading-test/${examId}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${examId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -139,7 +140,7 @@ const EditReadingTest = () => {
     const fetchPartData = async (partNumber) => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_BASE}/admin/reading/reading-test/${examId}/part-details/${partNumber}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${examId}/part-details/${partNumber}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -213,7 +214,7 @@ const EditReadingTest = () => {
 
     const handleTitleUpdate = async (newTitle) => {
         try {
-            const response = await fetch(`${API_BASE}/admin/reading/reading-test/${examId}/title`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${examId}/title`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -343,7 +344,7 @@ const EditReadingTest = () => {
             formData.append('question_content', questionsContent);
             formData.append('questions_json', JSON.stringify(questionsData));
 
-            const response = await fetch(`${API_BASE}/admin/reading/reading-test/${examId}/part/${partNumber}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${examId}/part/${partNumber}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`

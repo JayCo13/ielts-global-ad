@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Edit, AlertCircle, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const Notification = () => {
   const [notifications, setNotifications] = useState([]);
@@ -33,7 +34,7 @@ const Notification = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`${API_BASE}/admin/action/user-notifications`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/user-notifications`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -97,7 +98,7 @@ const Notification = () => {
       };
 
       console.log('Update Request Data:', requestData);
-      const response = await fetch(`${API_BASE}/admin/action/user-notification/${notificationId}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/user-notification/${notificationId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ const Notification = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE}/admin/action/user-notification/${notificationId}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/user-notification/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -157,7 +158,7 @@ const Notification = () => {
     formData.append('image', file);
 
     try {
-      const response = await fetch(`${API_BASE}/admin/action/upload-image`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/upload-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -204,7 +205,7 @@ const Notification = () => {
       };
 
       console.log('Create Request Data:', requestData);
-      const response = await fetch(`${API_BASE}/admin/action/user-notification`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/user-notification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

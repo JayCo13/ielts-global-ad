@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Edit, AlertCircle, ChevronRight } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const Key = () => {
   const [keys, setKeys] = useState([]);
@@ -32,7 +33,7 @@ const Key = () => {
 
   const fetchKeys = async () => {
     try {
-      const response = await fetch(`${API_BASE}/admin/action/update-keys`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-keys`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -55,7 +56,7 @@ const Key = () => {
 
   const handleUpdateKey = async (keyId) => {
     try {
-      const response = await fetch(`${API_BASE}/admin/action/update-key/${keyId}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-key/${keyId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ const Key = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE}/admin/action/update-key/${keyId}`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-key/${keyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -120,7 +121,7 @@ const Key = () => {
 
   const handleCreateKey = async () => {
     try {
-      const response = await fetch(`${API_BASE}/admin/action/update-key`, {
+      const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-key`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

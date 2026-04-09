@@ -48,13 +48,31 @@ function Dashboard() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      return null;
+    }
+  };
+
   const checkForNewData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
       const response = await fetch(`${API_BASE}/admin/dashboard/notifications`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
+        },
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -83,7 +101,10 @@ function Dashboard() {
         }
       }
     } catch (error) {
-      console.error('Error checking notifications:', error);
+      clearTimeout(timeoutId);
+      if (error.name !== 'AbortError') {
+        console.error('Error checking notifications:', error);
+      }
     }
   };
 
@@ -97,7 +118,7 @@ function Dashboard() {
     checkForNewData();
 
     // Check for new notifications every 30 seconds
-    const interval = setInterval(checkForNewData, 30000);
+    const interval = setInterval(checkForNewData, 60000);
 
     // Reset title when component unmounts
     return () => {
@@ -108,60 +129,34 @@ function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const headers = {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      };
 
-      // In fetchDashboardData function, add:
-      const examsResponse = await fetch(`${API_BASE}/admin/dashboard/exams`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
+      // Fetch ALL data in PARALLEL (not sequential) — total time = max() instead of sum()
+      const [examsData, statsData, packagesData, revenueData, studentsData] = await Promise.all([
+        fetchWithTimeout(`${API_BASE}/admin/dashboard/exams`, { headers }),
+        fetchWithTimeout(`${API_BASE}/admin/dashboard/statistics`, { headers }),
+        fetchWithTimeout(`${API_BASE}/admin/vip/dashboard/packages`, { headers }),
+        fetchWithTimeout(`${API_BASE}/admin/vip/dashboard/revenue`, { headers }),
+        fetchWithTimeout(`${API_BASE}/admin/dashboard/students`, { headers }),
+      ]);
 
-      if (!examsResponse.ok) throw new Error('Không thể tải dữ liệu bài thi');
-      const examsData = await examsResponse.json();
-      setExams(examsData);
-      // Fetch statistics
-      const statsResponse = await fetch(`${API_BASE}/admin/dashboard/statistics`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
+      // Check if all requests failed (server unreachable)
+      const results = [examsData, statsData, packagesData, revenueData, studentsData];
+      const allFailed = results.every(r => r === null);
 
-      if (!statsResponse.ok) throw new Error('Không thể tải dữ liệu thống kê');
-      const statsData = await statsResponse.json();
-      setStatistics(statsData);
-
-      // Fetch package statistics
-      const packagesResponse = await fetch(`${API_BASE}/admin/vip/dashboard/packages`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
-
-      if (!packagesResponse.ok) throw new Error('Không thể tải dữ liệu thống kê gói');
-      const packagesData = await packagesResponse.json();
-      setPackageStats(packagesData);
-
-      // Fetch revenue statistics
-      const revenueResponse = await fetch(`${API_BASE}/admin/vip/dashboard/revenue`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
-
-      if (!revenueResponse.ok) throw new Error('Không thể tải dữ liệu doanh thu');
-      const revenueData = await revenueResponse.json();
-      setRevenueStats(revenueData);
-
-      // Fetch students
-      const studentsResponse = await fetch(`${API_BASE}/admin/dashboard/students`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
-
-      if (!studentsResponse.ok) throw new Error('Không thể tải dữ liệu học viên');
-      const studentsData = await studentsResponse.json();
-      setStudents(studentsData);
+      if (allFailed) {
+        setError('Unable to connect to server. Please try again.');
+      } else {
+        setError(null);
+        // Update each section independently — partial failures won't crash the whole page
+        if (examsData) setExams(examsData);
+        if (statsData) setStatistics(statsData);
+        if (packagesData) setPackageStats(packagesData);
+        if (revenueData) setRevenueStats(revenueData);
+        if (studentsData) setStudents(studentsData);
+      }
 
       setLoading(false);
     } catch (err) {

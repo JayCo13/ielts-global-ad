@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 // Thêm các import ở trên cùng
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const ManageStudents = () => {
     const [selectedTest, setSelectedTest] = useState(null);
@@ -56,7 +57,7 @@ const ManageStudents = () => {
 
     const fetchUserStats = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/users/count`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/users/count`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -92,7 +93,7 @@ const ManageStudents = () => {
     const handleEdit = async (student) => {
         // Lấy thông tin chi tiết của học viên
         try {
-            const response = await fetch(`${API_BASE}/students/${student.user_id}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/students/${student.user_id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -120,7 +121,7 @@ const ManageStudents = () => {
 
     const fetchStudents = async () => {
         try {
-            const response = await fetch(`${API_BASE}/students`, {
+            const response = await fetchWithTimeout(`${API_BASE}/students`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -135,7 +136,7 @@ const ManageStudents = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${API_BASE}/students/${selectedStudent.user_id}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/students/${selectedStudent.user_id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -218,7 +219,7 @@ const ManageStudents = () => {
 
     const handleView = async (studentId) => {
         try {
-            const response = await fetch(`${API_BASE}/students/${studentId}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/students/${studentId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -245,7 +246,7 @@ const ManageStudents = () => {
         setVipLoading(true);
         setVipError(null);
         try {
-            const response = await fetch(`${API_BASE}/admin/vip/history/${userId}`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/vip/history/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -278,7 +279,7 @@ const ManageStudents = () => {
                 const results = await Promise.all(
                     idsToFetch.map(async (id) => {
                         try {
-                            const response = await fetch(`${API_BASE}/admin/vip/history/${id}`, {
+                            const response = await fetchWithTimeout(`${API_BASE}/admin/vip/history/${id}`, {
                                 headers: {
                                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                                 }

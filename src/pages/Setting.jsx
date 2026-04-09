@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Home, ChevronRight, Upload } from 'lucide-react';
 import API_BASE from '../config/api';
+import fetchWithTimeout from '../utils/fetchWithTimeout';
 
 const Settings = () => {
     const [profile, setProfile] = useState(null);
@@ -18,7 +19,7 @@ const Settings = () => {
 
     const fetchProfile = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/profile`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/profile`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
@@ -61,7 +62,7 @@ const Settings = () => {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/admin/profile`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/profile`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`

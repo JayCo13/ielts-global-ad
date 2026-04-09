@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Edit } from 'lucide-react';
 import API_BASE from '../../config/api';
+import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const EditAccessDialog = ({ 
     isOpen, 
@@ -19,7 +20,7 @@ const EditAccessDialog = ({
 
     const fetchExamAccessTypes = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admin/ielts-exams/${examId}/access`, {
+            const response = await fetchWithTimeout(`${API_BASE}/admin/ielts-exams/${examId}/access`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 }
