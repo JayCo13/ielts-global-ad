@@ -48,7 +48,7 @@ function Dashboard() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 30000) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -147,7 +147,26 @@ function Dashboard() {
       const allFailed = results.every(r => r === null);
 
       if (allFailed) {
-        setError('Unable to connect to server. Please try again.');
+        // Retry once with longer timeout (cold start recovery)
+        console.log('All requests failed, retrying with longer timeout...');
+        const [examsRetry, statsRetry, packagesRetry, revenueRetry, studentsRetry] = await Promise.all([
+          fetchWithTimeout(`${API_BASE}/admin/dashboard/exams`, { headers }, 45000),
+          fetchWithTimeout(`${API_BASE}/admin/dashboard/statistics`, { headers }, 45000),
+          fetchWithTimeout(`${API_BASE}/admin/vip/dashboard/packages`, { headers }, 45000),
+          fetchWithTimeout(`${API_BASE}/admin/vip/dashboard/revenue`, { headers }, 45000),
+          fetchWithTimeout(`${API_BASE}/admin/dashboard/students`, { headers }, 45000),
+        ]);
+        const retryResults = [examsRetry, statsRetry, packagesRetry, revenueRetry, studentsRetry];
+        if (retryResults.every(r => r === null)) {
+          setError('Unable to connect to server. Please try again.');
+        } else {
+          setError(null);
+          if (examsRetry) setExams(examsRetry);
+          if (statsRetry) setStatistics(statsRetry);
+          if (packagesRetry) setPackageStats(packagesRetry);
+          if (revenueRetry) setRevenueStats(revenueRetry);
+          if (studentsRetry) setStudents(studentsRetry);
+        }
       } else {
         setError(null);
         // Update each section independently — partial failures won't crash the whole page
