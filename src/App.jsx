@@ -7,6 +7,7 @@ import {
   Navigate
 } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import API_BASE from './config/api';
 
 import './css/style.css';
 
@@ -47,10 +48,22 @@ function App() {
     document.querySelector('html').style.scrollBehavior = ''
   }, [location.pathname]); // triggered on route change
 
-  // Inside your App component
+  // Token expiration check
   useEffect(() => {
     const interval = setInterval(checkTokenExpiration, 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Pre-warm backend + keep-alive to prevent Koyeb cold starts
+  useEffect(() => {
+    const warmupBackend = () => {
+      fetch(`${API_BASE}/health`, { method: 'GET', mode: 'cors' }).catch(() => {});
+    };
+    warmupBackend();
+
+    // Keep-alive: ping every 4 minutes
+    const keepAlive = setInterval(warmupBackend, 4 * 60 * 1000);
+    return () => clearInterval(keepAlive);
   }, []);
 
   return (

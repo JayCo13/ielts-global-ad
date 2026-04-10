@@ -129,6 +129,14 @@ function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+
+      // Warmup: wake the backend first before making real API calls
+      try {
+        await fetchWithTimeout(`${API_BASE}/warmup`, {}, 30000);
+      } catch (e) {
+        // Warmup failed — continue anyway, real requests will retry
+      }
+
       const headers = {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
       };
