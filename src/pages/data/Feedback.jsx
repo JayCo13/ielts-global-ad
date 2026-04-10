@@ -334,7 +334,11 @@ const Feedback = () => {
                       <div className="mb-2">
                         <img
                           width={100}
-                          src={`${API_BASE}${feedback.image_url}`}
+                          src={
+                            feedback.image_url.startsWith('data:') ? feedback.image_url :
+                            feedback.image_url.startsWith('/static/') ? `${API_BASE}${feedback.image_url}` :
+                            feedback.image_url
+                          }
                           alt="Feedback"
                           className="max-w-xs rounded-md"
                         />
