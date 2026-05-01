@@ -12,7 +12,8 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
     description: packageData?.description || '',
     is_active: packageData?.is_active !== undefined ? packageData.is_active : true,
     package_type: packageData?.package_type || 'all_skills',
-    skill_type: packageData?.skill_type || null
+    skill_type: packageData?.skill_type || null,
+    ls_variant_id: packageData?.ls_variant_id || ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -105,6 +106,10 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
       
       if (formData.package_type === 'single_skill' && formData.skill_type) {
         params.append('skill_type', formData.skill_type);
+      }
+
+      if (formData.ls_variant_id) {
+        params.append('ls_variant_id', formData.ls_variant_id);
       }
 
       // Append query parameters to URL
@@ -275,6 +280,28 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
             )}
           </div>
           
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Lemon Squeezy Variant ID
+            </label>
+            <input
+              type="text"
+              name="ls_variant_id"
+              value={formData.ls_variant_id}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              placeholder="e.g. 123456"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Lấy từ Lemon Squeezy Dashboard → Products → Variant ID. Bắt buộc để user có thể thanh toán.
+            </p>
+            {!formData.ls_variant_id && !isCreate && (
+              <p className="mt-1 text-xs text-amber-600 font-medium">
+                ⚠️ Chưa có Variant ID — gói này chưa thể thanh toán online
+              </p>
+            )}
+          </div>
+
           <div className="mb-4 flex items-center">
             <input
               type="checkbox"

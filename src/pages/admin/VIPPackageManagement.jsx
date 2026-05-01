@@ -197,6 +197,7 @@ const VIPPackageManagement = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Kỹ năng</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Thời hạn</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Giá</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Thanh toán</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Trạng thái</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ngày tạo</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Hành động</th>
@@ -205,7 +206,7 @@ const VIPPackageManagement = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedPackages.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                      <td colSpan="8" className="px-6 py-4 text-center text-sm text-gray-500">
                         Không tìm thấy gói dịch vụ nào. Hãy tạo gói đầu tiên của bạn!
                       </td>
                     </tr>
@@ -223,6 +224,17 @@ const VIPPackageManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatPrice(pkg.price)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {pkg.ls_variant_id ? (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800" title={`Variant ID: ${pkg.ls_variant_id}`}>
+                              ✓ Đã kết nối
+                            </span>
+                          ) : (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                              ⚠ Chưa cấu hình
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
