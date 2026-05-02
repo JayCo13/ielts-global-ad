@@ -586,7 +586,7 @@ const EditListeningTest = () => {
                         </h3>
                         <div className="h-[calc(100%-60px)]">
                             <Editor
-                                apiKey="aur4xkxqvptcthxzotku6rs1xpcp9tz3sxcuo6664k4s185h"
+                                apiKey="ok9tvg12zhhtkqesikbr69kxyz6dpck2aesuejwn8b7qcw4l"
                                 onInit={(evt, editor) => editorRef.current = editor}
                                 value={editorContent}
                                 onEditorChange={handleEditorChange}

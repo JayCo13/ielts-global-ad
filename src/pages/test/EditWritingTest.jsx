@@ -28,7 +28,7 @@ const EditWritingTest = () => {
         },
         tasks: []
     });
-     const fetchApiKey = async () => {
+    const fetchApiKey = async () => {
         try {
             const response = await fetchWithTimeout(`${API_BASE}/admin/action/update-keys`, {
                 headers: {
@@ -64,14 +64,14 @@ const EditWritingTest = () => {
                 }
             });
             const data = await response.json();
-            
+
             // Ensure we set default values for all controlled inputs
             setTestData({
                 title: data.title || '',
                 section: data.section || { duration: 0, total_marks: 0 },
                 tasks: data.tasks || []
             });
-            
+
             // Load first task data if available
             if (data.tasks && data.tasks.length > 0) {
                 const task = data.tasks[0];
@@ -110,7 +110,7 @@ const EditWritingTest = () => {
         fetchTestDetails();
     }, [examId]);
 
-   
+
 
     const handleEditorChange = (content) => {
         setEditorContent(content);
@@ -161,21 +161,21 @@ const EditWritingTest = () => {
             if (response.ok) {
                 toast.success(`Part ${currentPart.part_number} updated successfully!`);
                 if (currentPart.part_number === 1 && testData.tasks && testData.tasks.length > 1) {
-                const task2 = testData.tasks[1];
-                setCurrentPart({
-                    part_number: task2.part_number,
-                    task_type: task2.task_type,
-                    title: task2.title || '',
-                    instructions: task2.instructions,
-                    word_limit: task2.word_limit,
-                    total_marks: task2.total_marks,
-                    duration: task2.duration,
-                    is_forecast: task2.is_forecast || false
-                });
-                setEditorContent(task2.instructions);
-            } else {
-                navigate('/manage_test');
-            }
+                    const task2 = testData.tasks[1];
+                    setCurrentPart({
+                        part_number: task2.part_number,
+                        task_type: task2.task_type,
+                        title: task2.title || '',
+                        instructions: task2.instructions,
+                        word_limit: task2.word_limit,
+                        total_marks: task2.total_marks,
+                        duration: task2.duration,
+                        is_forecast: task2.is_forecast || false
+                    });
+                    setEditorContent(task2.instructions);
+                } else {
+                    navigate('/manage_test');
+                }
             }
         } catch (error) {
             toast.error('Failed to update part');
@@ -273,8 +273,8 @@ const EditWritingTest = () => {
                         </div>
 
                         <div className="h-[calc(100vh-180px)]">
-                                                   <Editor
-                                apiKey="tpb91vt7byjttii2osy6j9t9j1ygoualadzn0g6o8qu4gyzg"
+                            <Editor
+                                apiKey="mbitaig1o57ii8l8aa8wx4b4le9cc1e0aw5t2c1lo4axii6u"
                                 onInit={(evt, editor) => editorRef.current = editor}
                                 value={editorContent}
                                 init={{
@@ -298,29 +298,29 @@ const EditWritingTest = () => {
                                     image_description: false,
                                     image_dimensions: true,
                                     image_class_list: [
-                                        {title: 'Medium', value: 'img-medium'}
+                                        { title: 'Medium', value: 'img-medium' }
                                     ],
                                     file_picker_types: 'image',
                                     images_file_types: 'jpg,jpeg,png',
                                     image_advtab: false,
-                                    file_picker_callback: function(cb, value, meta) {
+                                    file_picker_callback: function (cb, value, meta) {
                                         if (meta.filetype === 'image') {
                                             const input = document.createElement('input');
                                             input.setAttribute('type', 'file');
                                             input.setAttribute('accept', 'image/*');
-                                        
+
                                             input.addEventListener('change', (e) => {
                                                 const file = e.target.files[0];
                                                 const reader = new FileReader();
                                                 reader.readAsDataURL(file);
                                                 reader.onload = () => {
-                                                    cb(reader.result, { 
+                                                    cb(reader.result, {
                                                         title: file.name,
                                                         class: 'img-medium'
                                                     });
                                                 };
                                             });
-                                        
+
                                             input.click();
                                         }
                                     }

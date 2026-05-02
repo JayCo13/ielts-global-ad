@@ -458,7 +458,7 @@ const CreateListeningTest = () => {
                             </h3>
                             <div className={`${questionTypeCollapsed ? 'h-[calc(100%-60px)]' : 'h-[calc(100%-60px)]'}`}>
                                 <Editor
-                                    apiKey="mbitaig1o57ii8l8aa8wx4b4le9cc1e0aw5t2c1lo4axii6u"
+                                    apiKey="ok9tvg12zhhtkqesikbr69kxyz6dpck2aesuejwn8b7qcw4l"
                                     onInit={(evt, editor) => editorRef.current = editor}
                                     value={currentPart.questions[currentIndex]?.question_text}
                                     init={{

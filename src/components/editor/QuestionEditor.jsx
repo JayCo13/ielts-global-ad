@@ -36,7 +36,7 @@ const QuestionEditor = ({ value, onChange }) => {
     }, []);
     return (
         <Editor
-            apiKey="x8qv7w0pkk74iqgmg44vcmclaec708cuu838bb4jx28o26ur"
+            apiKey="25r6pa5hppaawd2jsmlqt6e79vpzp1fcwozycapn5289qfhw"
             onInit={(evt, editor) => editorRef.current = editor}
             onEditorChange={onChange}
             value={value}
