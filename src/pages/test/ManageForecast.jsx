@@ -85,9 +85,7 @@ const ManageForecast = () => {
   const [selectedTest, setSelectedTest] = useState(null);
   const [parts, setParts] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [writingMeta, setWritingMeta] = useState({});
-  const [listeningMeta, setListeningMeta] = useState({});
-  const [readingMeta, setReadingMeta] = useState({});
+  const [forecastMeta, setForecastMeta] = useState({ sections: {}, writing: {} });
   const [page, setPage] = useState(1);
   const pageSize = 7;
   const [currentSkill, setCurrentSkill] = useState(null);
@@ -120,77 +118,22 @@ const ManageForecast = () => {
   }, []);
 
   useEffect(() => {
-    const fetchWritingMeta = async () => {
+    const fetchForecastMeta = async () => {
       try {
-        const res = await fetchWithTimeout(`${API_BASE}/admin/writing`, {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/dashboard/forecast-meta`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         });
         const data = await res.json();
-        const map = {};
-        (Array.isArray(data) ? data : []).forEach(t => {
-          map[t.test_id] = {
-            parts: (t.parts || []).map(p => ({ part_number: p.part_number, is_forecast: !!p.is_forecast }))
-          };
+        setForecastMeta({
+          sections: data.sections || {},
+          writing: data.writing || {}
         });
-        setWritingMeta(map);
       } catch (e) {
-        setWritingMeta({});
+        setForecastMeta({ sections: {}, writing: {} });
       }
     };
-    fetchWritingMeta();
+    fetchForecastMeta();
   }, []);
-
-  useEffect(() => {
-    const fetchListeningMeta = async () => {
-      try {
-        const listeningTests = (Array.isArray(tests) ? tests : []).filter(t => (t.section_types || []).includes('listening'));
-        const results = await Promise.all(listeningTests.map(async (t) => {
-          try {
-            const res = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${t.exam_id}`, {
-              headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-            });
-            const data = await res.json();
-            const parts = (data.parts || []).map(p => ({ part_number: p.part_number, is_forecast: !!p.is_forecast }));
-            return { exam_id: t.exam_id, parts };
-          } catch (e) {
-            return { exam_id: t.exam_id, parts: [] };
-          }
-        }));
-        const map = {};
-        results.forEach(r => { map[r.exam_id] = { parts: r.parts }; });
-        setListeningMeta(map);
-      } catch (e) {
-        setListeningMeta({});
-      }
-    };
-    fetchListeningMeta();
-  }, [tests]);
-
-  useEffect(() => {
-    const fetchReadingMeta = async () => {
-      try {
-        const readingTests = (Array.isArray(tests) ? tests : []).filter(t => (t.section_types || []).includes('reading'));
-        const results = await Promise.all(readingTests.map(async (t) => {
-          try {
-            const res = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${t.exam_id}`, {
-              headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-            });
-            const data = await res.json();
-            const parts = (data.sections || []).map(s => ({ part_number: s.order_number, is_forecast: !!s.is_forecast }));
-            return { exam_id: t.exam_id, parts };
-          } catch (e) {
-            return { exam_id: t.exam_id, parts: [] };
-          }
-        }));
-        const map = {};
-        results.forEach(r => { map[r.exam_id] = { parts: r.parts }; });
-        setReadingMeta(map);
-      } catch (e) {
-        setReadingMeta({});
-      }
-    };
-    fetchReadingMeta();
-  }, [tests]);
 
   const filtered = tests
     .filter(t => {
@@ -209,18 +152,12 @@ const ManageForecast = () => {
       if (filterForecast !== 'is_forecast') return true;
       const skill = skillLabel(t.section_types);
       if (skill === 'writing') {
-        const meta = writingMeta[t.exam_id];
-        return !!(meta && (meta.parts || []).some(p => p.is_forecast));
+        const parts = forecastMeta.writing[t.exam_id] || [];
+        return parts.some(p => p.is_forecast);
       }
-      if (skill === 'listening') {
-        const meta = listeningMeta[t.exam_id];
-        return !!(meta && (meta.parts || []).some(p => p.is_forecast));
-      }
-      if (skill === 'reading') {
-        const meta = readingMeta[t.exam_id];
-        return !!(meta && (meta.parts || []).some(p => p.is_forecast));
-      }
-      return false;
+      // listening & reading both use sections meta
+      const parts = forecastMeta.sections[t.exam_id] || [];
+      return parts.some(p => p.is_forecast);
     });
   const totalPages = Math.ceil(filtered.length / pageSize) || 1;
   const startIndex = (page - 1) * pageSize;
@@ -252,47 +189,17 @@ const ManageForecast = () => {
     setSelectedTest(test);
     const skill = skillLabel(test.section_types);
     setCurrentSkill(skill);
-    if (skill === 'listening') {
-      try {
-        const res = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${test.exam_id}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        });
-        const data = await res.json();
-        const ps = (data.parts || []).map(s => ({
-          part_number: s.part_number,
-          is_forecast: !!s.is_forecast,
-          forecast_title: s.forecast_title || '',
-          is_recommended: !!s.is_recommended,
-          question_types: Array.isArray(s.question_types) ? s.question_types : []
-        }));
-        setParts(ps);
-      } catch (e) {
-        toast.error('Failed to load listening parts');
-        setParts([]);
-      }
-      setIsDialogOpen(true);
-      return;
-    }
-    if (skill === 'reading') {
-      try {
-        const res = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${test.exam_id}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        });
-        const data = await res.json();
-        const ps = (data.sections || []).map(s => ({
-          part_number: s.order_number,
-          description: s.description || '',
-          questions_count: Array.isArray(s.question_groups) ? s.question_groups.reduce((acc, g) => acc + (Array.isArray(g.questions) ? g.questions.length : 0), 0) : 0,
-          is_forecast: !!s.is_forecast,
-          forecast_title: s.forecast_title || '',
-          is_recommended: !!s.is_recommended,
-          question_types: Array.isArray(s.question_types) ? s.question_types : []
-        }));
-        setParts(ps);
-      } catch (e) {
-        toast.error('Failed to load reading parts');
-        setParts([]);
-      }
+    if (skill === 'listening' || skill === 'reading') {
+      // Use already-loaded forecastMeta instead of making a heavy API call
+      const sectionParts = forecastMeta.sections[test.exam_id] || [];
+      const ps = sectionParts.map(s => ({
+        part_number: s.part_number,
+        is_forecast: !!s.is_forecast,
+        forecast_title: s.forecast_title || '',
+        is_recommended: !!s.is_recommended,
+        question_types: Array.isArray(s.question_types) ? s.question_types : []
+      }));
+      setParts(ps);
       setIsDialogOpen(true);
       return;
     }
@@ -301,17 +208,14 @@ const ManageForecast = () => {
       setIsDialogOpen(true);
       return;
     }
-    try {
-      const res = await fetchWithTimeout(`${API_BASE}/admin/writing`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-      });
-      const data = await res.json();
-      const match = (Array.isArray(data) ? data : []).find(x => x.test_id === test.exam_id);
-      setParts(match ? match.parts.map(p => ({ ...p, title: p.title || '', is_forecast: !!p.is_forecast, is_recommended: !!p.is_recommended })) : []);
-    } catch (e) {
-      toast.error('Failed to load writing parts');
-      setParts([]);
-    }
+    // Writing — use already-loaded forecastMeta
+    const writingParts = forecastMeta.writing[test.exam_id] || [];
+    setParts(writingParts.map(p => ({
+      ...p,
+      title: p.title || '',
+      is_forecast: !!p.is_forecast,
+      is_recommended: !!p.is_recommended
+    })));
     setIsDialogOpen(true);
   };
 
@@ -377,6 +281,14 @@ const ManageForecast = () => {
       toast.error('Save failed');
     } finally {
       setSaving(false);
+      // Refresh the cached forecast meta so the table stays in sync
+      try {
+        const metaRes = await fetchWithTimeout(`${API_BASE}/admin/dashboard/forecast-meta`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+        });
+        const metaData = await metaRes.json();
+        setForecastMeta({ sections: metaData.sections || {}, writing: metaData.writing || {} });
+      } catch (_) {}
     }
   };
 
@@ -474,8 +386,8 @@ const ManageForecast = () => {
                           {(() => {
                             const skill = skillLabel(t.section_types);
                             if (skill === 'writing') {
-                              const meta = writingMeta[t.exam_id];
-                              const marked = meta ? meta.parts.filter(p => p.is_forecast).map(p => p.part_number) : [];
+                              const parts = forecastMeta.writing[t.exam_id] || [];
+                              const marked = parts.filter(p => p.is_forecast).map(p => p.part_number);
                               const has = marked.length > 0;
                               return (
                                 <div className="text-sm">
@@ -484,29 +396,16 @@ const ManageForecast = () => {
                                 </div>
                               );
                             }
-                            if (skill === 'listening') {
-                              const meta = listeningMeta[t.exam_id];
-                              const marked = meta ? meta.parts.filter(p => p.is_forecast).map(p => p.part_number) : [];
-                              const has = marked.length > 0;
-                              return (
-                                <div className="text-sm">
-                                  <div className={has ? 'text-green-700' : 'text-gray-600'}>{has ? 'Yes' : 'No'}</div>
-                                  <div className="text-gray-700">{has ? `Part ${marked.join(' & ')}` : '-'}</div>
-                                </div>
-                              );
-                            }
-                            if (skill === 'reading') {
-                              const meta = readingMeta[t.exam_id];
-                              const marked = meta ? meta.parts.filter(p => p.is_forecast).map(p => p.part_number) : [];
-                              const has = marked.length > 0;
-                              return (
-                                <div className="text-sm">
-                                  <div className={has ? 'text-green-700' : 'text-gray-600'}>{has ? 'Yes' : 'No'}</div>
-                                  <div className="text-gray-700">{has ? `Part ${marked.join(' & ')}` : '-'}</div>
-                                </div>
-                              );
-                            }
-                            return (<div className="text-sm text-gray-600">-</div>);
+                            // listening & reading both use sections meta
+                            const parts = forecastMeta.sections[t.exam_id] || [];
+                            const marked = parts.filter(p => p.is_forecast).map(p => p.part_number);
+                            const has = marked.length > 0;
+                            return (
+                              <div className="text-sm">
+                                <div className={has ? 'text-green-700' : 'text-gray-600'}>{has ? 'Yes' : 'No'}</div>
+                                <div className="text-gray-700">{has ? `Part ${marked.join(' & ')}` : '-'}</div>
+                              </div>
+                            );
                           })()}
                         </td>
                         <td className="px-6 py-4 text-right">
