@@ -79,6 +79,7 @@ const SimpleModal = ({ open, onClose, title, children }) => {
 
 const ManageForecast = () => {
   const [tests, setTests] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filterSkill, setFilterSkill] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -91,6 +92,7 @@ const ManageForecast = () => {
   const [currentSkill, setCurrentSkill] = useState(null);
   const [filterForecast, setFilterForecast] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const searchTimerRef = React.useRef(null);
 
   const resetFilters = () => {
     setFilterSkill('all');
@@ -99,24 +101,37 @@ const ManageForecast = () => {
     setPage(1);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const res = await fetchWithTimeout(`${API_BASE}/admin/dashboard/exams?skip=0&limit=10000`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        });
-        const data = await res.json();
-        setTests(Array.isArray(data) ? data : []);
-      } catch (e) {
-        toast.error('Failed to load exams');
-      } finally {
-        setLoading(false);
+  // Server-side paginated fetch — only loads 1 page at a time
+  const fetchPage = React.useCallback(async (currentPage, search, skill, forecast) => {
+    try {
+      setLoading(true);
+      const skip = (currentPage - 1) * pageSize;
+      const params = new URLSearchParams({ skip, limit: pageSize });
+      if (search) params.set('search', search);
+      if (skill && skill !== 'all') {
+        params.set('exam_type', skill === 'writing' ? 'essay' : skill);
       }
-    };
-    fetchData();
+      if (forecast === 'is_forecast') params.set('forecast_only', 'true');
+      const res = await fetchWithTimeout(`${API_BASE}/admin/dashboard/exams?${params}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+      });
+      const data = await res.json();
+      // Handle both old array and new {items, total_count} format
+      if (Array.isArray(data)) {
+        setTests(data);
+        setTotalCount(data.length);
+      } else {
+        setTests(data.items || []);
+        setTotalCount(data.total_count || 0);
+      }
+    } catch (e) {
+      toast.error('Failed to load exams');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  // Fetch forecast meta once (lightweight)
   useEffect(() => {
     const fetchForecastMeta = async () => {
       try {
@@ -135,37 +150,23 @@ const ManageForecast = () => {
     fetchForecastMeta();
   }, []);
 
-  const filtered = tests
-    .filter(t => {
-      if (searchQuery.trim()) {
-        return t.title.toLowerCase().includes(searchQuery.toLowerCase());
-      }
-      return true;
-    })
-    .filter(t => {
-      if (filterSkill === 'all') return true;
-      const types = t.section_types || [];
-      if (filterSkill === 'writing') return types.includes('essay');
-      return types.includes(filterSkill);
-    })
-    .filter(t => {
-      if (filterForecast !== 'is_forecast') return true;
-      const skill = skillLabel(t.section_types);
-      if (skill === 'writing') {
-        const parts = forecastMeta.writing[t.exam_id] || [];
-        return parts.some(p => p.is_forecast);
-      }
-      // listening & reading both use sections meta
-      const parts = forecastMeta.sections[t.exam_id] || [];
-      return parts.some(p => p.is_forecast);
-    });
-  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
-  const startIndex = (page - 1) * pageSize;
-  const pageItems = filtered.slice(startIndex, startIndex + pageSize);
-
+  // Fetch when page/filters change
   useEffect(() => {
-    setPage(1);
-  }, [filterSkill, filterForecast, searchQuery, tests.length]);
+    fetchPage(page, searchQuery, filterSkill, filterForecast);
+  }, [page, filterSkill, filterForecast, fetchPage]);
+
+  // Debounced search — waits 500ms after user stops typing
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setPage(1);
+      fetchPage(1, searchQuery, filterSkill, filterForecast);
+    }, 500);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchQuery]);
+
+  const pageItems = tests; // Already paginated from server
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
   const getVisiblePages = (total, current) => {
     const pages = [];
@@ -482,7 +483,7 @@ const ManageForecast = () => {
                   </tbody>
                 </table>
                 <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
-                  <div className="text-sm text-gray-600">Page {page} of {totalPages}</div>
+                  <div className="text-sm text-gray-600">Page {page} of {totalPages} ({totalCount} tests)</div>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       className="px-3 py-1 border rounded disabled:opacity-50"

@@ -49,9 +49,10 @@ const [loading, setLoading] = useState(false);
                 }
             });
             const data = await response.json();
-            setTests(data);
+            const items = Array.isArray(data) ? data : data.items || [];
+            setTests(items);
             // Preload reading forecast status for tests that include reading
-            const readingTests = (Array.isArray(data) ? data : []).filter(t => Array.isArray(t.section_types) && t.section_types.includes('reading'));
+            const readingTests = items.filter(t => Array.isArray(t.section_types) && t.section_types.includes('reading'));
             const token = localStorage.getItem('access_token');
             const requests = readingTests.map(t => (
                 fetch(`${API_BASE}/admin/reading-test/${t.exam_id}`, {

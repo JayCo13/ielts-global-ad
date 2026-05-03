@@ -169,7 +169,7 @@ function Dashboard() {
           setError('Unable to connect to server. Please try again.');
         } else {
           setError(null);
-          if (examsRetry) setExams(examsRetry);
+          if (examsRetry) setExams(Array.isArray(examsRetry) ? examsRetry : examsRetry.items || []);
           if (statsRetry) setStatistics(statsRetry);
           if (packagesRetry) setPackageStats(packagesRetry);
           if (revenueRetry) setRevenueStats(revenueRetry);
@@ -178,7 +178,7 @@ function Dashboard() {
       } else {
         setError(null);
         // Update each section independently — partial failures won't crash the whole page
-        if (examsData) setExams(examsData);
+        if (examsData) setExams(Array.isArray(examsData) ? examsData : examsData.items || []);
         if (statsData) setStatistics(statsData);
         if (packagesData) setPackageStats(packagesData);
         if (revenueData) setRevenueStats(revenueData);

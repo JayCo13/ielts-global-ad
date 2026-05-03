@@ -29,8 +29,9 @@ const ManagePartTitles = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
+            const rawItems = Array.isArray(data) ? data : data.items || [];
             // Filter to only listening and reading tests
-            const relevantTests = (Array.isArray(data) ? data : []).filter(t => {
+            const relevantTests = rawItems.filter(t => {
                 const types = Array.isArray(t.section_types) ? t.section_types : [];
                 return types.includes('listening') || types.includes('reading');
             });
