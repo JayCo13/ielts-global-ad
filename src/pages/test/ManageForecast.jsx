@@ -2,9 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Toaster, toast } from 'react-hot-toast';
-import { Home, ChevronRight, Filter, FileText, Headphones, BookOpen, Edit3, RotateCcw, Star, Search } from 'lucide-react';
+import { Home, ChevronRight, Filter, FileText, Headphones, BookOpen, Edit3, RotateCcw, Star, Search, Tag } from 'lucide-react';
 import API_BASE from '../../config/api';
 import fetchWithTimeout from '../../utils/fetchWithTimeout';
+
+const QUESTION_TYPES = {
+  listening: [
+    'Multiple Choice', 'Matching', 'Plan/Map/Diagram Labelling',
+    'Form Completion', 'Note Completion', 'Table Completion',
+    'Flow-chart Completion', 'Summary Completion', 'Sentence Completion',
+    'Short Answer'
+  ],
+  reading: [
+    'Multiple Choice', 'Identifying Information (T/F/NG)',
+    "Identifying Writer's Views (Y/N/NG)", 'Matching Information',
+    'Matching Headings', 'Matching Features', 'Matching Sentence Endings',
+    'Sentence Completion', 'Summary Completion', 'Note Completion',
+    'Table Completion', 'Flow-chart Completion', 'Diagram Label Completion',
+    'Short Answer'
+  ]
+};
 
 const skillLabel = (types) => {
   if (!types || types.length === 0) return 'Unknown';
@@ -245,7 +262,8 @@ const ManageForecast = () => {
           part_number: s.part_number,
           is_forecast: !!s.is_forecast,
           forecast_title: s.forecast_title || '',
-          is_recommended: !!s.is_recommended
+          is_recommended: !!s.is_recommended,
+          question_types: Array.isArray(s.question_types) ? s.question_types : []
         }));
         setParts(ps);
       } catch (e) {
@@ -267,7 +285,8 @@ const ManageForecast = () => {
           questions_count: Array.isArray(s.question_groups) ? s.question_groups.reduce((acc, g) => acc + (Array.isArray(g.questions) ? g.questions.length : 0), 0) : 0,
           is_forecast: !!s.is_forecast,
           forecast_title: s.forecast_title || '',
-          is_recommended: !!s.is_recommended
+          is_recommended: !!s.is_recommended,
+          question_types: Array.isArray(s.question_types) ? s.question_types : []
         }));
         setParts(ps);
       } catch (e) {
@@ -324,7 +343,8 @@ const ManageForecast = () => {
             part_number: p.part_number,
             is_forecast: !!p.is_forecast,
             forecast_title: p.is_forecast ? (p.forecast_title || '') : null,
-            is_recommended: !!p.is_recommended
+            is_recommended: !!p.is_recommended,
+            question_types: p.question_types || []
           })
         });
         if (!res.ok) {
@@ -343,7 +363,8 @@ const ManageForecast = () => {
             part_number: p.part_number,
             is_forecast: !!p.is_forecast,
             forecast_title: p.is_forecast ? (p.forecast_title || '') : null,
-            is_recommended: !!p.is_recommended
+            is_recommended: !!p.is_recommended,
+            question_types: p.question_types || []
           })
         });
         if (!res.ok) {
@@ -576,6 +597,37 @@ const ManageForecast = () => {
                   placeholder="Forecast title (optional)"
                   className="mt-3 w-full px-3 py-2 border rounded"
                 />
+                <div className="mt-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-sm text-gray-600">
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>Question Types</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(QUESTION_TYPES.listening || []).map(qt => {
+                      const active = (p.question_types || []).includes(qt);
+                      return (
+                        <button
+                          key={qt}
+                          type="button"
+                          onClick={() => {
+                            const next = [...parts];
+                            const current = p.question_types || [];
+                            const updated = active ? current.filter(t => t !== qt) : [...current, qt];
+                            next[idx] = { ...p, question_types: updated };
+                            setParts(next);
+                          }}
+                          className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                            active
+                              ? 'bg-violet-100 border-violet-400 text-violet-700'
+                              : 'bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600'
+                          }`}
+                        >
+                          {qt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="mt-3 flex justify-end">
                   <button disabled={saving} onClick={() => savePart(p)} className="px-3 py-1 bg-violet-600 text-white rounded">Save</button>
                 </div>
@@ -626,6 +678,37 @@ const ManageForecast = () => {
                   placeholder="Forecast title (optional)"
                   className="mt-3 w-full px-3 py-2 border rounded"
                 />
+                <div className="mt-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-sm text-gray-600">
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>Question Types</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(QUESTION_TYPES.reading || []).map(qt => {
+                      const active = (p.question_types || []).includes(qt);
+                      return (
+                        <button
+                          key={qt}
+                          type="button"
+                          onClick={() => {
+                            const next = [...parts];
+                            const current = p.question_types || [];
+                            const updated = active ? current.filter(t => t !== qt) : [...current, qt];
+                            next[idx] = { ...p, question_types: updated };
+                            setParts(next);
+                          }}
+                          className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                            active
+                              ? 'bg-violet-100 border-violet-400 text-violet-700'
+                              : 'bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600'
+                          }`}
+                        >
+                          {qt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="mt-3 flex justify-end">
                   <button disabled={saving} onClick={() => savePart(p)} className="px-3 py-1 bg-violet-600 text-white rounded">Save</button>
                 </div>

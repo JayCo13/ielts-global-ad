@@ -37,6 +37,7 @@ import VIPPackageManagement from './pages/admin/VIPPackageManagement';
 import SubscriptionsList from './pages/admin/SubscriptionsList';
 import DictationManagement from './pages/admin/DictationManagement';
 import ManagePartTitles from './pages/test/ManagePartTitles';
+import MarketingEmail from './pages/admin/MarketingEmail';
 
 function App() {
 
@@ -177,6 +178,13 @@ function App() {
         <Route path="/dictation" element={
           <ProtectedRoute>
             <DictationManagement />
+          </ProtectedRoute>
+        } />
+
+        {/* Marketing Email Broadcast */}
+        <Route path="/marketing-email" element={
+          <ProtectedRoute>
+            <MarketingEmail />
           </ProtectedRoute>
         } />
 
