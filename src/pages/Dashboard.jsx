@@ -437,7 +437,7 @@ function Dashboard() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                          {exams.slice(0, 7).map((exam) => (
+                          {(Array.isArray(exams) ? exams : []).slice(0, 7).map((exam) => (
                             <tr key={exam.exam_id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
                               <td className="px-6 py-4">
                                 <div className="font-semibold text-gray-900 dark:text-white">
