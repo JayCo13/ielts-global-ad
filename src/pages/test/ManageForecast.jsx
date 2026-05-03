@@ -426,7 +426,7 @@ const ManageForecast = () => {
 
             {loading ? (
               <div className="p-8 text-center text-gray-600">Loading exams...</div>
-            ) : filtered.length === 0 ? (
+            ) : pageItems.length === 0 ? (
               <div className="p-8 text-center text-gray-600">No exams</div>
             ) : (
               <div className="overflow-x-auto">
