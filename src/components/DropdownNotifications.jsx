@@ -76,20 +76,24 @@ function DropdownNotifications({ align }) {
     return () => window.removeEventListener('checkNotifications', handleNotificationCheck);
   }, []);
 
+  const fetchingRef = useRef(false);
+
   // Modify fetchNotifications to properly handle new notifications
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (signal) => {
+    if (fetchingRef.current) return; // Skip if already fetching
+    fetchingRef.current = true;
     setLoading(true);
     try {
-      const response = await fetchWithTimeout(`${API_BASE}/admin/dashboard/notifications`, {
+      const response = await fetch(`${API_BASE}/admin/dashboard/notifications`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
+        },
+        signal
       });
 
-      if (!response.ok) throw new Error('Không thể tải thông báo');
+      if (!response.ok) throw new Error('Failed to load notifications');
 
       const data = await response.json();
-      console.log('Dữ liệu thông báo:', data); // Debug log
 
       // Make sure we have the full data
       const latestNotifications = data.slice(0, 4);
@@ -99,20 +103,21 @@ function DropdownNotifications({ align }) {
 
       if (hasUnread && !dropdownOpen) {
         setHasNewNotifications(true);
-        document.title = `(${latestNotifications.filter(n => n.is_read === false).length}) Mới • ${originalTitle.current}`;
+        document.title = `(${latestNotifications.filter(n => n.is_read === false).length}) New • ${originalTitle.current}`;
         try {
           await notificationSound.current.play();
         } catch (err) {
-          console.log('Phát âm thanh thất bại:', err);
+          // Audio playback failed
         }
       }
 
       setNotifications(latestNotifications);
     } catch (err) {
-      setError('Không thể tải thông báo');
-      console.error(err);
+      if (err.name === 'AbortError') return; // Ignore abort errors
+      setError('Failed to load notifications');
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   };
 
@@ -165,13 +170,25 @@ function DropdownNotifications({ align }) {
     }
   };
 
-  // Add polling effect
+  // Add polling effect — check every 2 minutes (reduced from 30s to prevent overloading backend)
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // Check every 30 seconds
+    const abortController = new AbortController();
+    let timeoutId = null;
+
+    const poll = async () => {
+      if (abortController.signal.aborted) return;
+      await fetchNotifications(abortController.signal);
+      // Schedule next poll
+      if (!abortController.signal.aborted) {
+        timeoutId = setTimeout(poll, 120000);
+      }
+    };
+
+    poll();
 
     return () => {
-      clearInterval(interval);
+      abortController.abort();
+      if (timeoutId) clearTimeout(timeoutId);
       document.title = originalTitle.current;
     };
   }, []);

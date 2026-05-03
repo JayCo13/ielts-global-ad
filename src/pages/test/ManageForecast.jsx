@@ -189,17 +189,66 @@ const ManageForecast = () => {
     setSelectedTest(test);
     const skill = skillLabel(test.section_types);
     setCurrentSkill(skill);
-    if (skill === 'listening' || skill === 'reading') {
-      // Use already-loaded forecastMeta instead of making a heavy API call
-      const sectionParts = forecastMeta.sections[test.exam_id] || [];
-      const ps = sectionParts.map(s => ({
-        part_number: s.part_number,
-        is_forecast: !!s.is_forecast,
-        forecast_title: s.forecast_title || '',
-        is_recommended: !!s.is_recommended,
-        question_types: Array.isArray(s.question_types) ? s.question_types : []
-      }));
-      setParts(ps);
+    if (skill === 'listening') {
+      // Try cached forecastMeta first, fall back to API call
+      const cached = forecastMeta.sections[test.exam_id];
+      if (cached && cached.length > 0) {
+        setParts(cached.map(s => ({
+          part_number: s.part_number,
+          is_forecast: !!s.is_forecast,
+          forecast_title: s.forecast_title || '',
+          is_recommended: !!s.is_recommended,
+          question_types: Array.isArray(s.question_types) ? s.question_types : []
+        })));
+      } else {
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/admin/listening-test/${test.exam_id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+          });
+          const data = await res.json();
+          setParts((data.parts || []).map(s => ({
+            part_number: s.part_number,
+            is_forecast: !!s.is_forecast,
+            forecast_title: s.forecast_title || '',
+            is_recommended: !!s.is_recommended,
+            question_types: Array.isArray(s.question_types) ? s.question_types : []
+          })));
+        } catch (e) {
+          toast.error('Failed to load listening parts');
+          setParts([]);
+        }
+      }
+      setIsDialogOpen(true);
+      return;
+    }
+    if (skill === 'reading') {
+      const cached = forecastMeta.sections[test.exam_id];
+      if (cached && cached.length > 0) {
+        setParts(cached.map(s => ({
+          part_number: s.part_number,
+          is_forecast: !!s.is_forecast,
+          forecast_title: s.forecast_title || '',
+          is_recommended: !!s.is_recommended,
+          question_types: Array.isArray(s.question_types) ? s.question_types : []
+        })));
+      } else {
+        try {
+          const res = await fetchWithTimeout(`${API_BASE}/admin/reading/reading-test/${test.exam_id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+          });
+          const data = await res.json();
+          setParts((data.sections || []).map(s => ({
+            part_number: s.order_number,
+            is_forecast: !!s.is_forecast,
+            forecast_title: s.forecast_title || '',
+            is_recommended: !!s.is_recommended,
+            question_types: Array.isArray(s.question_types) ? s.question_types : []
+          })));
+        } catch (e) {
+          toast.error('Failed to load reading parts');
+          setParts([]);
+        }
+      }
       setIsDialogOpen(true);
       return;
     }
@@ -208,14 +257,28 @@ const ManageForecast = () => {
       setIsDialogOpen(true);
       return;
     }
-    // Writing — use already-loaded forecastMeta
-    const writingParts = forecastMeta.writing[test.exam_id] || [];
-    setParts(writingParts.map(p => ({
-      ...p,
-      title: p.title || '',
-      is_forecast: !!p.is_forecast,
-      is_recommended: !!p.is_recommended
-    })));
+    // Writing
+    const cachedWriting = forecastMeta.writing[test.exam_id];
+    if (cachedWriting && cachedWriting.length > 0) {
+      setParts(cachedWriting.map(p => ({
+        ...p,
+        title: p.title || '',
+        is_forecast: !!p.is_forecast,
+        is_recommended: !!p.is_recommended
+      })));
+    } else {
+      try {
+        const res = await fetchWithTimeout(`${API_BASE}/admin/writing`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+        });
+        const data = await res.json();
+        const match = (Array.isArray(data) ? data : []).find(x => x.test_id === test.exam_id);
+        setParts(match ? match.parts.map(p => ({ ...p, title: p.title || '', is_forecast: !!p.is_forecast, is_recommended: !!p.is_recommended })) : []);
+      } catch (e) {
+        toast.error('Failed to load writing parts');
+        setParts([]);
+      }
+    }
     setIsDialogOpen(true);
   };
 
