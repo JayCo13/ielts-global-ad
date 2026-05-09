@@ -215,6 +215,30 @@ const CreateWritingTest = () => {
                                     file_picker_types: 'image',
                                     images_file_types: 'jpg,jpeg,png',
                                     image_advtab: false,
+                                    automatic_uploads: true,
+                                    images_upload_handler: (blobInfo) => new Promise((resolve, reject) => {
+                                        const formData = new FormData();
+                                        formData.append('image', blobInfo.blob(), blobInfo.filename());
+                                        const token = localStorage.getItem('token');
+                                        fetchWithTimeout(`${API_BASE}/admin/action/upload-image`, {
+                                            method: 'POST',
+                                            headers: { 'Authorization': `Bearer ${token}` },
+                                            body: formData
+                                        })
+                                            .then(async (res) => {
+                                                if (!res.ok) {
+                                                    reject('Upload failed');
+                                                    return;
+                                                }
+                                                const data = await res.json();
+                                                if (!data.image_url) { reject('No image URL'); return; }
+                                                const url = data.image_url.startsWith('http')
+                                                    ? data.image_url
+                                                    : `${API_BASE}${data.image_url}`;
+                                                resolve(url);
+                                            })
+                                            .catch(() => reject('Upload error'));
+                                    }),
                                     file_picker_callback: function (cb, value, meta) {
                                         if (meta.filetype === 'image') {
                                             const input = document.createElement('input');
@@ -223,14 +247,33 @@ const CreateWritingTest = () => {
 
                                             input.addEventListener('change', (e) => {
                                                 const file = e.target.files[0];
-                                                const reader = new FileReader();
-                                                reader.readAsDataURL(file);
-                                                reader.onload = () => {
-                                                    cb(reader.result, {
-                                                        title: file.name,
-                                                        class: 'img-medium'
-                                                    });
-                                                };
+                                                const formData = new FormData();
+                                                formData.append('image', file, file.name);
+                                                const token = localStorage.getItem('token');
+                                                fetchWithTimeout(`${API_BASE}/admin/action/upload-image`, {
+                                                    method: 'POST',
+                                                    headers: { 'Authorization': `Bearer ${token}` },
+                                                    body: formData
+                                                })
+                                                    .then(async (res) => {
+                                                        if (!res.ok) {
+                                                            toast.error('Image upload failed');
+                                                            return;
+                                                        }
+                                                        const data = await res.json();
+                                                        if (!data.image_url) {
+                                                            toast.error('Image upload failed');
+                                                            return;
+                                                        }
+                                                        const url = data.image_url.startsWith('http')
+                                                            ? data.image_url
+                                                            : `${API_BASE}${data.image_url}`;
+                                                        cb(url, {
+                                                            title: file.name,
+                                                            class: 'img-medium'
+                                                        });
+                                                    })
+                                                    .catch(() => toast.error('Image upload error'));
                                             });
 
                                             input.click();

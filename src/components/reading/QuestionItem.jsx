@@ -49,9 +49,13 @@ const QuestionItem = ({
   };
 
   // Determine if this is a matching question type
-  const isMatchingType = question.question_type === 'matching_headings' || 
-                         question.question_type === 'matching_names' || 
-                         question.question_type === 'matching';
+  const isMatchingType = question.question_type === 'matching_headings' ||
+                         question.question_type === 'matching_names' ||
+                         question.question_type === 'matching' ||
+                         question.question_type === 'matching_features_dragdrop' ||
+                         question.question_type === 'matching_features_table';
+
+  const additionalData = question.additional_data || {};
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
@@ -125,7 +129,7 @@ const QuestionItem = ({
       {question.question_type === 'multiple_choice' && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Options
+            Options (select one correct answer)
           </label>
           {question.options.map((option, optionIndex) => (
             <div key={optionIndex} className="flex items-center mb-2">
@@ -144,6 +148,84 @@ const QuestionItem = ({
               />
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Show options for multiple-answer multiple choice */}
+      {question.question_type === 'multiple_choice_multi' && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Options (tick all correct answers)
+          </label>
+          {question.options.map((option, optionIndex) => (
+            <div key={optionIndex} className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                checked={!!option.is_correct}
+                onChange={(e) => updateQuestionOption(index, optionIndex, 'is_correct', e.target.checked)}
+                className="mr-2"
+              />
+              <input
+                type="text"
+                value={option.option_text}
+                onChange={(e) => updateQuestionOption(index, optionIndex, 'option_text', e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+                placeholder={`Option ${optionIndex + 1}`}
+              />
+            </div>
+          ))}
+          <div className="mt-2">
+            <label className="block text-xs text-gray-500 mb-1">
+              Required number of selections (optional)
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={additionalData.required_choices || ''}
+              onChange={(e) => updateQuestion(index, 'additional_data', {
+                ...additionalData,
+                required_choices: e.target.value ? parseInt(e.target.value, 10) : null
+              })}
+              className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+              placeholder="e.g., 2"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Summary completion with word list */}
+      {question.question_type === 'summary_completion_wordlist' && (
+        <div className="mb-4 space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Correct Answer
+            </label>
+            <input
+              type="text"
+              value={question.correct_answer || ''}
+              onChange={(e) => updateQuestion(index, 'correct_answer', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+              placeholder="Word from the list"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Word List (comma-separated, shared across the group)
+            </label>
+            <textarea
+              value={(additionalData.word_list || []).join(', ')}
+              onChange={(e) => updateQuestion(index, 'additional_data', {
+                ...additionalData,
+                word_list: e.target.value
+                  .split(',')
+                  .map(w => w.trim())
+                  .filter(Boolean)
+              })}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+              placeholder="A. recovery, B. growth, C. decline, ..."
+            />
+          </div>
         </div>
       )}
       

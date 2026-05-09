@@ -17,11 +17,15 @@ const MatchingOptionsEditor = ({
     <div className="mt-4 border-t pt-4 border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-2">
         <h4 className="font-medium text-gray-700 dark:text-gray-300">
-          {questionType === 'matching_headings' 
-            ? 'Available Headings' 
-            : questionType === 'matching_names' 
-              ? 'Available Names/People' 
-              : 'Available Options'}
+          {questionType === 'matching_headings'
+            ? 'Available Headings'
+            : questionType === 'matching_names'
+              ? 'Available Names/People'
+              : questionType === 'matching_features_dragdrop'
+                ? 'Available Features (drag-and-drop)'
+                : questionType === 'matching_features_table'
+                  ? 'Feature Table Rows'
+                  : 'Available Options'}
         </h4>
         <button 
           onClick={() => setShowHelp(!showHelp)}
@@ -38,6 +42,10 @@ const MatchingOptionsEditor = ({
             <p>For matching headings, students will match headings to paragraphs. Each paragraph can have only one heading, but a heading can be used multiple times or not at all.</p>
           ) : questionType === 'matching_names' ? (
             <p>For matching names, students will match names to statements. Each statement can have only one name, but a name can be used multiple times or not at all.</p>
+          ) : questionType === 'matching_features_dragdrop' ? (
+            <p>Matching features (drag-and-drop): students drag a feature label onto each question. List every feature here; assign each one to the question numbers it correctly answers.</p>
+          ) : questionType === 'matching_features_table' ? (
+            <p>Matching features (table): rendered as a table where rows are features and columns are questions. Same data shape as drag-and-drop — only the student-side layout differs.</p>
           ) : (
             <p>For general matching, students will match options to questions. Each question can have only one option, but an option can be used multiple times or not at all.</p>
           )}

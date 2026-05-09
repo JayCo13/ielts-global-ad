@@ -49,11 +49,15 @@ const EditReadingTest = () => {
         instructions: []
     });
     const QUESTION_TYPES = [
-        { value: 'multiple_choice', label: 'Multiple Choice' },
+        { value: 'multiple_choice', label: 'Multiple Choice (Single Answer)' },
+        { value: 'multiple_choice_multi', label: 'Multiple Choice (Multiple Answers)' },
         { value: 'fill_blank', label: 'Fill in the Blank' },
         { value: 'matching_headings', label: 'Matching Headings' },
         { value: 'matching_names', label: 'Matching Names' },
         { value: 'matching', label: 'Matching Information' },
+        { value: 'matching_features_dragdrop', label: 'Matching Features (Drag-and-drop)' },
+        { value: 'matching_features_table', label: 'Matching Features (Table)' },
+        { value: 'summary_completion_wordlist', label: 'Summary Completion (with word list)' },
         { value: 'true_false_not_given', label: 'True/False/Not Given' },
         { value: 'yes_no_not_given', label: 'Yes/No/Not Given' },
         { value: 'long_answer', label: 'Long Answer' }

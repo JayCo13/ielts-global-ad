@@ -17,12 +17,16 @@ import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const EditListeningTest = () => {
     const QUESTION_TYPES = [
-        { value: 'multiple_choice', label: 'Multiple Choice' },
+        { value: 'multiple_choice', label: 'Multiple Choice (Single Answer)' },
+        { value: 'multiple_choice_multi', label: 'Multiple Choice (Multiple Answers)' },
         { value: 'three_options', label: 'Three Options' },
         { value: 'two_options', label: 'Two Options' },
         { value: 'fill_in_blank', label: 'Fill in the Blank' },
         { value: 'map', label: 'Map' },
         { value: 'matching', label: 'Matching' },
+        { value: 'matching_features_dragdrop', label: 'Matching Features (Drag-and-drop)' },
+        { value: 'matching_features_table', label: 'Matching Features (Table)' },
+        { value: 'summary_completion_wordlist', label: 'Summary Completion (with word list)' },
         { value: 'true_false', label: 'True/False' }
     ];
     const getInitialQuestionState = (type = 'multiple_choice') => {
