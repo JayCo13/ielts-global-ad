@@ -8,16 +8,22 @@ import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
 const QUESTION_TYPES = {
   listening: [
-    'Multiple Choice', 'Matching', 'Plan/Map/Diagram Labelling',
+    'Multiple Choice', 'Multiple Choice (Single Answer)', 'Multiple Choice (Multiple Answers)',
+    'Matching', 'Matching Features (Drag-and-drop)', 'Matching Features (Table)',
+    'Plan/Map/Diagram Labelling',
     'Form Completion', 'Note Completion', 'Table Completion',
-    'Flow-chart Completion', 'Summary Completion', 'Sentence Completion',
-    'Short Answer'
+    'Flow-chart Completion', 'Summary Completion', 'Summary Completion (with word list)',
+    'Sentence Completion', 'Short Answer'
   ],
   reading: [
-    'Multiple Choice', 'Identifying Information (T/F/NG)',
+    'Multiple Choice', 'Multiple Choice (Single Answer)', 'Multiple Choice (Multiple Answers)',
+    'Identifying Information (T/F/NG)',
     "Identifying Writer's Views (Y/N/NG)", 'Matching Information',
-    'Matching Headings', 'Matching Features', 'Matching Sentence Endings',
-    'Sentence Completion', 'Summary Completion', 'Note Completion',
+    'Matching Headings', 'Matching Features',
+    'Matching Features (Drag-and-drop)', 'Matching Features (Table)',
+    'Matching Sentence Endings',
+    'Sentence Completion', 'Summary Completion', 'Summary Completion (with word list)',
+    'Note Completion',
     'Table Completion', 'Flow-chart Completion', 'Diagram Label Completion',
     'Short Answer'
   ]
