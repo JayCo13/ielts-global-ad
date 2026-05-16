@@ -293,12 +293,14 @@ const ManageForecast = () => {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
             'Content-Type': 'application/json'
           },
-          // task1_type is only meaningful on Part 1; send empty string to clear.
+          // task1_type is only meaningful on Part 1, task2_type only on Part 2;
+          // send empty string to clear the tag on the matching part.
           body: JSON.stringify({
             title: p.title || null,
             is_forecast: !!p.is_forecast,
             is_recommended: !!p.is_recommended,
-            task1_type: p.part_number === 1 ? (p.task1_type || '') : null
+            task1_type: p.part_number === 1 ? (p.task1_type || '') : null,
+            task2_type: p.part_number === 2 ? (p.task2_type || '') : null
           })
         });
         if (!res.ok) {
@@ -748,6 +750,30 @@ const ManageForecast = () => {
                       <option value="line">Line graph</option>
                       <option value="bar">Bar chart</option>
                       <option value="mixed">Mixed</option>
+                    </select>
+                  </div>
+                )}
+                {p.part_number === 2 && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Task 2 question type
+                    </label>
+                    <select
+                      value={p.task2_type || ''}
+                      onChange={(e) => {
+                        const next = [...parts];
+                        next[idx] = { ...p, task2_type: e.target.value || null };
+                        setParts(next);
+                      }}
+                      className="w-full px-3 py-2 border rounded"
+                    >
+                      <option value="">Untagged (sorts last)</option>
+                      <option value="agree_disagree">Agree or disagree</option>
+                      <option value="positive_negative">Negative or positive</option>
+                      <option value="advantages_disadvantages">Advantages outweigh disadvantages</option>
+                      <option value="discussion">Discuss both views and give your opinion</option>
+                      <option value="solutions_effects">Two parts: Solutions - effects</option>
+                      <option value="two_part_mixed">Two parts: Mixed</option>
                     </select>
                   </div>
                 )}

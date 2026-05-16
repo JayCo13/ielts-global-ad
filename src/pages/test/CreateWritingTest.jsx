@@ -28,6 +28,16 @@ const CreateWritingTest = () => {
         { value: 'mixed', label: 'Mixed' }
     ];
 
+    // Task 2 essay flavours — ordering drives Part 2 sort across the flows.
+    const TASK2_QUESTION_TYPES = [
+        { value: 'agree_disagree', label: 'Agree or disagree' },
+        { value: 'positive_negative', label: 'Negative or positive' },
+        { value: 'advantages_disadvantages', label: 'Advantages outweigh disadvantages' },
+        { value: 'discussion', label: 'Discuss both views and give your opinion' },
+        { value: 'solutions_effects', label: 'Two parts: Solutions - effects' },
+        { value: 'two_part_mixed', label: 'Two parts: Mixed' }
+    ];
+
     const navigate = useNavigate();
     const editorRef = useRef(null);
     // Remove fileInputRef
@@ -44,6 +54,7 @@ const CreateWritingTest = () => {
         part_number: 1,
         task_type: 'essay',
         task1_type: null,
+        task2_type: null,
         instructions: '',
         word_limit: 250,
         total_marks: 20.0,
@@ -105,6 +116,7 @@ const CreateWritingTest = () => {
                     part_number: 2,
                     task_type: 'essay',
                     task1_type: null,
+                    task2_type: null,
                     instructions: '',
                     word_limit: 250,
                     total_marks: 20.0,
@@ -208,6 +220,24 @@ const CreateWritingTest = () => {
                                         >
                                             <option value="">Question type…</option>
                                             {TASK1_QUESTION_TYPES.map(type => (
+                                                <option key={type.value} value={type.value}>
+                                                    {type.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                    {currentPart.part_number === 2 && (
+                                        <select
+                                            value={currentPart.task2_type || ''}
+                                            onChange={(e) => setCurrentPart({
+                                                ...currentPart,
+                                                task2_type: e.target.value || null
+                                            })}
+                                            className="px-3 py-2 rounded border"
+                                            title="Task 2 question type (drives Part 2 sort order)"
+                                        >
+                                            <option value="">Question type…</option>
+                                            {TASK2_QUESTION_TYPES.map(type => (
                                                 <option key={type.value} value={type.value}>
                                                     {type.label}
                                                 </option>

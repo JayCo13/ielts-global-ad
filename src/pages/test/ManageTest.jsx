@@ -490,11 +490,18 @@ const [loading, setLoading] = useState(false);
                                                 })()}
                                             </div>
                                         )}
-                                        {Array.isArray(test.section_types) && (test.section_types.includes('essay') || test.section_types.includes('writing')) && test.task1_type && (
-                                            <div className="mt-1 text-xs">
-                                                <span className="inline-block px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200 capitalize">
-                                                    Task 1: {test.task1_type}
-                                                </span>
+                                        {Array.isArray(test.section_types) && (test.section_types.includes('essay') || test.section_types.includes('writing')) && (test.task1_type || test.task2_type) && (
+                                            <div className="mt-1 text-xs flex flex-wrap gap-1">
+                                                {test.task1_type && (
+                                                    <span className="inline-block px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200 capitalize">
+                                                        Task 1: {test.task1_type}
+                                                    </span>
+                                                )}
+                                                {test.task2_type && (
+                                                    <span className="inline-block px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                                                        Task 2: {test.task2_type.replace(/_/g, ' ')}
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
                                     </td>
