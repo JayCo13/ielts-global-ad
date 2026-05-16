@@ -438,19 +438,35 @@ function Sidebar({
                               </span>
                             </NavLink>
                           </li>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink end to="/marketing-email">
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Gửi Email Marketing
-                              </span>
-                            </NavLink>
-                          </li>
                         </ul>
                       </div>
                     </React.Fragment>
                   );
                 }}
               </SidebarLinkGroup>
+              {/* Marketing Email — top-level for visibility */}
+              <li className={`px-3 py-2 rounded-sm mb-0.5 last:mb-0 ${pathname.includes('marketing-email') && 'bg-slate-900'}`}>
+                <NavLink
+                  end
+                  to="/marketing-email"
+                  className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${pathname.includes('marketing-email') ? '' : 'hover:text-gray-900 dark:hover:text-white'}`}
+                >
+                  <div className="flex items-center">
+                    <svg
+                      className="shrink-0 fill-current text-gray-400 dark:text-gray-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                    </svg>
+                    <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                      Marketing Email
+                    </span>
+                  </div>
+                </NavLink>
+              </li>
               {/* Dictation Management */}
               <SidebarLinkGroup>
                 {(handleClick, open) => {
