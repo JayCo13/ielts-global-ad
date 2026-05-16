@@ -293,7 +293,13 @@ const ManageForecast = () => {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ title: p.title || null, is_forecast: !!p.is_forecast, is_recommended: !!p.is_recommended })
+          // task1_type is only meaningful on Part 1; send empty string to clear.
+          body: JSON.stringify({
+            title: p.title || null,
+            is_forecast: !!p.is_forecast,
+            is_recommended: !!p.is_recommended,
+            task1_type: p.part_number === 1 ? (p.task1_type || '') : null
+          })
         });
         if (!res.ok) {
           const msg = await res.text();
@@ -720,6 +726,31 @@ const ManageForecast = () => {
                   placeholder="Part title"
                   className="mt-3 w-full px-3 py-2 border rounded"
                 />
+                {p.part_number === 1 && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Task 1 question type
+                    </label>
+                    <select
+                      value={p.task1_type || ''}
+                      onChange={(e) => {
+                        const next = [...parts];
+                        next[idx] = { ...p, task1_type: e.target.value || null };
+                        setParts(next);
+                      }}
+                      className="w-full px-3 py-2 border rounded"
+                    >
+                      <option value="">Untagged (sorts last)</option>
+                      <option value="pie">Pie chart</option>
+                      <option value="map">Map</option>
+                      <option value="process">Process</option>
+                      <option value="table">Table</option>
+                      <option value="line">Line graph</option>
+                      <option value="bar">Bar chart</option>
+                      <option value="mixed">Mixed</option>
+                    </select>
+                  </div>
+                )}
                 <div className="mt-3 flex justify-end">
                   <button disabled={saving} onClick={() => savePart(p)} className="px-3 py-1 bg-violet-600 text-white rounded">Save</button>
                 </div>
