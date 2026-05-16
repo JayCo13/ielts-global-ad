@@ -220,6 +220,13 @@ const [loading, setLoading] = useState(false);
         }
     };
 
+    const TASK1_TYPE_ORDER = ['pie', 'map', 'process', 'table', 'line', 'bar', 'mixed'];
+    const task1TypeRank = (t) => {
+        const i = TASK1_TYPE_ORDER.indexOf(t);
+        return i === -1 ? TASK1_TYPE_ORDER.length : i;
+    };
+    const isWritingFilter = filters.type === 'writing';
+
     const filteredTests = tests
         .filter(test =>
             test.title.toLowerCase().includes(filters.search.toLowerCase()) &&
@@ -236,6 +243,10 @@ const [loading, setLoading] = useState(false);
             return true;
         })
         .sort((a, b) => {
+            if (isWritingFilter) {
+                const rankDiff = task1TypeRank(a.task1_type) - task1TypeRank(b.task1_type);
+                if (rankDiff !== 0) return rankDiff;
+            }
             if (filters.sortBy === 'title') {
                 return a.title.localeCompare(b.title);
             }
@@ -477,6 +488,13 @@ const [loading, setLoading] = useState(false);
                                                         </span>
                                                     );
                                                 })()}
+                                            </div>
+                                        )}
+                                        {Array.isArray(test.section_types) && (test.section_types.includes('essay') || test.section_types.includes('writing')) && test.task1_type && (
+                                            <div className="mt-1 text-xs">
+                                                <span className="inline-block px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200 capitalize">
+                                                    Task 1: {test.task1_type}
+                                                </span>
                                             </div>
                                         )}
                                     </td>

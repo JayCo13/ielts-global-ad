@@ -16,6 +16,18 @@ const CreateWritingTest = () => {
         { value: 'letter', label: 'Table' }
     ];
 
+    // Task 1 chart/diagram types — kept in the same order they are listed
+    // for, drives the listing sort order across admin and user flows.
+    const TASK1_QUESTION_TYPES = [
+        { value: 'pie', label: 'Pie chart' },
+        { value: 'map', label: 'Map' },
+        { value: 'process', label: 'Process' },
+        { value: 'table', label: 'Table' },
+        { value: 'line', label: 'Line graph' },
+        { value: 'bar', label: 'Bar chart' },
+        { value: 'mixed', label: 'Mixed' }
+    ];
+
     const navigate = useNavigate();
     const editorRef = useRef(null);
     // Remove fileInputRef
@@ -31,6 +43,7 @@ const CreateWritingTest = () => {
     const [currentPart, setCurrentPart] = useState({
         part_number: 1,
         task_type: 'essay',
+        task1_type: null,
         instructions: '',
         word_limit: 250,
         total_marks: 20.0,
@@ -91,6 +104,7 @@ const CreateWritingTest = () => {
                 setCurrentPart({
                     part_number: 2,
                     task_type: 'essay',
+                    task1_type: null,
                     instructions: '',
                     word_limit: 250,
                     total_marks: 20.0,
@@ -167,20 +181,40 @@ const CreateWritingTest = () => {
                                 <h2 className="text-lg font-semibold">
                                     Part {currentPart.part_number}
                                 </h2>
-                                <select
-                                    value={currentPart.task_type}
-                                    onChange={(e) => setCurrentPart({
-                                        ...currentPart,
-                                        task_type: e.target.value
-                                    })}
-                                    className="px-3 py-2 rounded border"
-                                >
-                                    {TASK_TYPES.map(type => (
-                                        <option key={type.value} value={type.value}>
-                                            {type.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={currentPart.task_type}
+                                        onChange={(e) => setCurrentPart({
+                                            ...currentPart,
+                                            task_type: e.target.value
+                                        })}
+                                        className="px-3 py-2 rounded border"
+                                    >
+                                        {TASK_TYPES.map(type => (
+                                            <option key={type.value} value={type.value}>
+                                                {type.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {currentPart.part_number === 1 && (
+                                        <select
+                                            value={currentPart.task1_type || ''}
+                                            onChange={(e) => setCurrentPart({
+                                                ...currentPart,
+                                                task1_type: e.target.value || null
+                                            })}
+                                            className="px-3 py-2 rounded border"
+                                            title="Task 1 question type (drives listing sort order)"
+                                        >
+                                            <option value="">Question type…</option>
+                                            {TASK1_QUESTION_TYPES.map(type => (
+                                                <option key={type.value} value={type.value}>
+                                                    {type.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
