@@ -283,7 +283,7 @@ const CreateWritingTest = () => {
                                     images_upload_handler: (blobInfo) => new Promise((resolve, reject) => {
                                         const formData = new FormData();
                                         formData.append('image', blobInfo.blob(), blobInfo.filename());
-                                        const token = localStorage.getItem('token');
+                                        const token = localStorage.getItem('access_token');
                                         fetchWithTimeout(`${API_BASE}/admin/action/upload-image`, {
                                             method: 'POST',
                                             headers: { 'Authorization': `Bearer ${token}` },
@@ -313,7 +313,7 @@ const CreateWritingTest = () => {
                                                 const file = e.target.files[0];
                                                 const formData = new FormData();
                                                 formData.append('image', file, file.name);
-                                                const token = localStorage.getItem('token');
+                                                const token = localStorage.getItem('access_token');
                                                 fetchWithTimeout(`${API_BASE}/admin/action/upload-image`, {
                                                     method: 'POST',
                                                     headers: { 'Authorization': `Bearer ${token}` },

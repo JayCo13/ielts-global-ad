@@ -25,7 +25,7 @@ const MarketingEmail = () => {
         setStatusMessage(null);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const response = await fetchWithTimeout(`${API_BASE}/admin/marketing/send-email`, {
                 method: 'POST',
                 headers: {
