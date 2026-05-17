@@ -280,6 +280,9 @@ const CreateWritingTest = () => {
                                     images_file_types: 'jpg,jpeg,png',
                                     image_advtab: false,
                                     automatic_uploads: true,
+                                    // Keep uploaded image URLs absolute when saved — otherwise TinyMCE
+                                    // rewrites them to relative and the student app can't resolve them.
+                                    convert_urls: false,
                                     images_upload_handler: (blobInfo) => new Promise((resolve, reject) => {
                                         const formData = new FormData();
                                         formData.append('image', blobInfo.blob(), blobInfo.filename());
