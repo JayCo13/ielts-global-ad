@@ -5,6 +5,12 @@ import { ToastContainer, toast } from 'react-toastify';
 import API_BASE from '../../config/api';
 import fetchWithTimeout from '../../utils/fetchWithTimeout';
 
+// Image URLs can be absolute (Cloudflare R2 upload) or relative (/static/...
+// fallback). Only prepend API_BASE for relative paths — naively concatenating
+// breaks R2 URLs (API_BASE + https://pub-...r2.dev/...).
+const resolveNotificationImageUrl = (url) =>
+  url && /^https?:\/\//i.test(url) ? url : `${API_BASE}${url}`;
+
 const Notification = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -419,7 +425,7 @@ const Notification = () => {
                       </div>
                     ) : (
                       <div>
-                        <div className="text-base text-gray-900">{notification.content}</div>
+                        <div className="text-base text-gray-900 whitespace-pre-line">{notification.content}</div>
                         <div className="mt-1 text-sm text-gray-500 font-bold">
                           Trạng thái: <span className={notification.is_active ? 'text-green-600' : 'text-red-600'}>{notification.is_active ? 'Đang kích hoạt' : 'Không kích hoạt'}</span>
                         </div>
@@ -436,7 +442,7 @@ const Notification = () => {
                       <div className="mb-2">
                         <img
                           width={100}
-                          src={`${API_BASE}${notification.image_url}`}
+                          src={resolveNotificationImageUrl(notification.image_url)}
                           alt="Notification"
                           className="max-w-xs rounded-md"
                         />
