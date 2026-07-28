@@ -86,7 +86,7 @@ const PendingTransactions = () => {
   }, []);
   const handleApprove = (transaction) => {
     setCurrentTransaction(transaction);
-    setAdminNote('');
+    setAdminNote('Thanh toán thành công, cảm ơn quý khách đã tin tưởng sử dụng gói VIP của chúng tôi!');
     setShowApproveModal(true);
   };
 
@@ -281,7 +281,7 @@ const PendingTransactions = () => {
                               <div className="text-sm text-gray-900">{tx.package_name}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">${tx.amount.toFixed(2)}</div>
+                              <div className="text-sm text-gray-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tx.amount)}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">{tx.payment_method}</div>
@@ -377,7 +377,7 @@ const PendingTransactions = () => {
                   Admin Note (Optional)
                 </label>
                 <textarea
-                  value="Thanh toán thành công, Cảm ơn quý khác đã tin tưởng sử dụng gói VIP của chúng tôi!"
+                  value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   rows="3"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
@@ -513,7 +513,7 @@ const PendingTransactions = () => {
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700/30 p-2.5 rounded-md">
                       <p className="text-md font-medium text-gray-500 dark:text-gray-400">Số Tiền:</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(currentTransaction.amount)}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentTransaction.amount)}</p>
                     </div>
                   </div>
 
