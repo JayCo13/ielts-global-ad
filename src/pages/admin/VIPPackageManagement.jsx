@@ -66,7 +66,7 @@ const VIPPackageManagement = () => {
   };
 
   const formatPrice = (price) => {
-    return '$' + new Intl.NumberFormat('en-US').format(price);
+    return new Intl.NumberFormat('vi-VN').format(price) + '₫';
   };
 
   const handleToggleStatus = async (pkg) => {
