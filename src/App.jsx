@@ -21,6 +21,7 @@ import Setting from './pages/Setting';
 import Login from './pages/auth/Login';
 import Feedback from './pages/data/Feedback';
 import ErrorReports from './pages/admin/ErrorReports';
+import Announcements from './pages/admin/Announcements';
 import Key from './pages/data/Key';
 import Notification from './pages/data/Notification';
 import EditReadingTest from './pages/test/EditReadingTest';
@@ -101,6 +102,12 @@ function App() {
         <Route path="/error-reports" element={
           <ProtectedRoute>
             <ErrorReports />
+          </ProtectedRoute>
+        } />
+        {/* Homepage announcements ("Latest News" on the student site) */}
+        <Route path="/announcements" element={
+          <ProtectedRoute>
+            <Announcements />
           </ProtectedRoute>
         } />
         <Route path="/create_student" element={
