@@ -32,6 +32,10 @@ import EditWritingTest from './pages/test/EditWritingTest';
 import CreateListeningTest from './pages/test/CreateListeningTest';
 import CreateReadingTest from './pages/test/CreateReadingTest';
 import CreateSpeakingTest from './pages/test/CreateSpeakingTest';
+// VN Speaking port: question bank (paste + AI generation + examiner TTS) and Pronunciation Lessons.
+import SpeakingAdd from './pages/admin/SpeakingAdd';
+import SpeakingTopics from './pages/admin/SpeakingTopics';
+import PronunciationLessonsAdmin from './pages/admin/PronunciationLessonsAdmin';
 import CreateWritingTest from './pages/test/CreateWritingTest';
 import ManageTest from './pages/test/ManageTest';
 import ManageForecast from './pages/test/ManageForecast';
@@ -165,6 +169,21 @@ function App() {
         <Route path="/create_speaking_test" element={
           <ProtectedRoute>
             <CreateSpeakingTest />
+          </ProtectedRoute>
+        } />
+        <Route path="/speaking-add" element={
+          <ProtectedRoute>
+            <SpeakingAdd />
+          </ProtectedRoute>
+        } />
+        <Route path="/speaking-topics" element={
+          <ProtectedRoute>
+            <SpeakingTopics />
+          </ProtectedRoute>
+        } />
+        <Route path="/pronunciation-lessons" element={
+          <ProtectedRoute>
+            <PronunciationLessonsAdmin />
           </ProtectedRoute>
         } />
         <Route path="/manage_test" element={
