@@ -10,6 +10,7 @@ const CreateAccount = () => {
     const [formData, setFormData] = useState({
         email: '',
         username: '',
+        months: '',
     });
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [responseData, setResponseData] = useState(null);
@@ -25,7 +26,11 @@ const CreateAccount = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    email: formData.email,
+                    username: formData.username,
+                    months: formData.months ? parseInt(formData.months, 10) : null,
+                })
             });
 
             if (response.ok) {
@@ -122,6 +127,23 @@ const CreateAccount = () => {
                                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200"
                                         placeholder="Enter username"
                                     />
+                                </div>
+
+                                <div>
+                                    <label htmlFor="months" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Số tháng sử dụng
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="months"
+                                        min="1"
+                                        max="60"
+                                        value={formData.months}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200"
+                                        placeholder="Để trống = mặc định 3 tháng"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Số tháng tài khoản có hiệu lực (hết hạn sẽ tự chuyển sang tài khoản thường). Để trống = 3 tháng (90 ngày).</p>
                                 </div>
                             </div>
 

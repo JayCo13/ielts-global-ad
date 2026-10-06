@@ -90,6 +90,27 @@ const ManageStudents = () => {
         });
     };
 
+    // Dictation is granted per account (ported from VN): customers no longer need
+    // role='student' to get it.
+    const handleToggleDictation = async (student) => {
+        const enabled = !student.can_dictation;
+        try {
+            const response = await fetchWithTimeout(`${API_BASE}/students/${student.user_id}/dictation`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+                },
+                body: JSON.stringify({ enabled }),
+            });
+            if (!response.ok) throw new Error('failed');
+            setStudents((prev) => prev.map((s) =>
+                s.user_id === student.user_id ? { ...s, can_dictation: enabled } : s));
+        } catch (err) {
+            console.error('Could not change Dictation permission:', err);
+        }
+    };
+
     const handleEdit = async (student) => {
         // Lấy thông tin chi tiết của học viên
         try {
@@ -172,8 +193,9 @@ const ManageStudents = () => {
             return false;
         }
 
-        const searchMatch = student.username.toLowerCase().includes(filters.search.toLowerCase()) ||
-            student.email.toLowerCase().includes(filters.search.toLowerCase());
+        const q = (filters.search || '').toLowerCase();
+        const searchMatch = (student.username || '').toLowerCase().includes(q) ||
+            (student.email || '').toLowerCase().includes(q);
         const statusMatch = filters.status === 'all' ? true : student.status === filters.status;
 
         const roleMatch = filters.role === 'all' ? true :
@@ -195,9 +217,9 @@ const ManageStudents = () => {
     }).sort((a, b) => {
         switch (filters.sortBy) {
             case 'username':
-                return a.username.localeCompare(b.username);
+                return (a.username || '').localeCompare(b.username || '');
             case 'email':
-                return a.email.localeCompare(b.email);
+                return (a.email || '').localeCompare(b.email || '');
             case 'created':
                 return new Date(b.created_at) - new Date(a.created_at);
             default:
@@ -550,6 +572,17 @@ const ManageStudents = () => {
                                                 className="text-sm font-medium text-red-600 hover:text-red-700 dark:hover:text-red-400"
                                             >
                                                 Đặt lại mật khẩu
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleDictation(student)}
+                                                title={student.can_dictation
+                                                    ? 'Thu hồi quyền Dictation'
+                                                    : 'Cấp quyền Dictation'}
+                                                className={`text-sm font-medium ${student.can_dictation
+                                                    ? 'text-emerald-600 hover:text-emerald-700 dark:hover:text-emerald-400'
+                                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                                            >
+                                                {student.can_dictation ? 'Bỏ Dictation' : 'Cấp Dictation'}
                                             </button>
                                         </div>
                                     </td>
