@@ -22,6 +22,7 @@ import Login from './pages/auth/Login';
 import Feedback from './pages/data/Feedback';
 import ErrorReports from './pages/admin/ErrorReports';
 import Announcements from './pages/admin/Announcements';
+import BroadcastEmail from './pages/admin/BroadcastEmail';
 import Key from './pages/data/Key';
 import Notification from './pages/data/Notification';
 import EditReadingTest from './pages/test/EditReadingTest';
@@ -225,6 +226,12 @@ function App() {
         <Route path="/marketing-email" element={
           <ProtectedRoute>
             <MarketingEmail />
+          </ProtectedRoute>
+        } />
+        {/* Email broadcast with history/status (ported from VN) */}
+        <Route path="/broadcast-email" element={
+          <ProtectedRoute>
+            <BroadcastEmail />
           </ProtectedRoute>
         } />
 
