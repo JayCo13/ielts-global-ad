@@ -35,6 +35,8 @@ import CreateSpeakingTest from './pages/test/CreateSpeakingTest';
 import CreateWritingTest from './pages/test/CreateWritingTest';
 import ManageTest from './pages/test/ManageTest';
 import ManageForecast from './pages/test/ManageForecast';
+import QuestionTyping from './pages/test/QuestionTyping';
+import ForecastAuto from './pages/admin/ForecastAuto';
 import VIPPackageManagement from './pages/admin/VIPPackageManagement';
 import SubscriptionsList from './pages/admin/SubscriptionsList';
 import PendingTransactions from './pages/admin/PendingTransactions';
@@ -211,6 +213,18 @@ function App() {
         <Route path="/manage_part_titles" element={
           <ProtectedRoute>
             <ManagePartTitles />
+          </ProtectedRoute>
+        } />
+
+        {/* VN port: question typing (stats categories) + auto forecast / difficulty */}
+        <Route path="/question-typing" element={
+          <ProtectedRoute>
+            <QuestionTyping />
+          </ProtectedRoute>
+        } />
+        <Route path="/forecast-auto" element={
+          <ProtectedRoute>
+            <ForecastAuto />
           </ProtectedRoute>
         } />
 
