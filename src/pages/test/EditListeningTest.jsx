@@ -442,6 +442,195 @@ const EditListeningTest = () => {
         }
     };
 
+    // ── Mốc thời gian audio ──
+    // Gióng transcript vào audio để học viên nghe lại đúng đoạn chứa đáp án. Cron chạy
+    // hằng đêm, nút này để admin chạy ngay sau khi vừa sửa transcript hoặc thay audio.
+    const [alignParts, setAlignParts] = useState([]);
+    const [aligning, setAligning] = useState(null);
+
+    const fetchAlignment = async () => {
+        if (!examId) return;
+        try {
+            const res = await fetch(`${API_BASE}/admin/listening-alignment/exam/${examId}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            setAlignParts(data.parts || []);
+        } catch (e) { /* thông tin phụ, hỏng thì bỏ qua */ }
+    };
+
+    useEffect(() => { fetchAlignment(); }, [examId]);
+
+    const runAlignment = async (sectionId) => {
+        setAligning(sectionId);
+        try {
+            const res = await fetch(
+                `${API_BASE}/admin/listening-alignment/section/${sectionId}/run`,
+                { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail || 'Gióng thất bại');
+            toast.success(`Part ${data.part_number}: đã tạo mốc (phủ ${data.coverage_pct}%)`);
+            fetchAlignment();
+        } catch (e) {
+            toast.error(e.message);
+        } finally {
+            setAligning(null);
+        }
+    };
+
+    // Gợi ý locate: máy đã biết câu nào trong transcript chứa đáp án, nên điền sẵn cho
+    // admin duyệt thay vì phải tự dò. Chỉ gợi ý, không tự lưu.
+    const [locateHints, setLocateHints] = useState({});
+    const [hinting, setHinting] = useState(false);
+
+    const fetchLocateHints = async (sectionId) => {
+        setHinting(true);
+        try {
+            const res = await fetch(
+                `${API_BASE}/admin/listening-alignment/section/${sectionId}/suggest-locate`,
+                { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail || 'Không lấy được gợi ý');
+            const byOrder = {};
+            (data.questions || []).forEach((q) => { byOrder[q.order] = q; });
+            setLocateHints(byOrder);
+            toast.success(`Gợi ý được ${data.suggested}/${data.total} câu`);
+        } catch (e) {
+            toast.error(e.message);
+        } finally {
+            setHinting(false);
+        }
+    };
+
+    const applyHint = (index) => {
+        const hint = locateHints[index + 1];
+        if (hint?.suggestion) handleQuestionUpdate(index, 'locate', hint.suggestion);
+    };
+
+    const applyAllHints = () => {
+        let n = 0;
+        currentPart.questions.forEach((q, i) => {
+            const hint = locateHints[i + 1];
+            // Only fill blanks and "question 31" placeholders — never overwrite an
+            // excerpt an admin wrote by hand.
+            const cur = (q.locate || '').trim();
+            const isPlaceholder = /^(question|câu)\s*\d+$/i.test(cur);
+            if (hint?.suggestion && (!cur || isPlaceholder)) {
+                handleQuestionUpdate(i, 'locate', hint.suggestion);
+                n += 1;
+            }
+        });
+        toast.success(n ? `Đã điền ${n} câu — nhớ bấm Lưu` : 'Không có câu nào cần điền');
+    };
+
+    // ── Rà mốc thời gian từng câu ──
+    // Trắc nghiệm A/B/C không tự dò được (đáp án không phải từ được nói ra), nên phải
+    // nghe rồi ghim tay. Mốc ghim tay luôn thắng và không bị job gióng lại xoá.
+    const [cuePanel, setCuePanel] = useState(null);   // { section_id, part_number, questions }
+    const [cueSaving, setCueSaving] = useState(null);
+    const cueAudioRef = useRef(null);
+
+    const openCuePanel = async (sectionId) => {
+        try {
+            const res = await fetch(
+                `${API_BASE}/admin/listening-alignment/section/${sectionId}/cues`,
+                { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail || 'Không tải được danh sách mốc');
+            setCuePanel(data);
+        } catch (e) {
+            toast.error(e.message);
+        }
+    };
+
+    const previewCue = (start, end) => {
+        const audio = cueAudioRef.current;
+        if (!audio || start == null) return;
+        const stopAt = () => {
+            if (end != null && audio.currentTime >= end) {
+                audio.pause();
+                audio.removeEventListener('timeupdate', stopAt);
+            }
+        };
+        const go = () => {
+            audio.addEventListener('timeupdate', stopAt);
+            audio.currentTime = start;
+            const p = audio.play();
+            if (p && p.catch) p.catch(() => {});
+        };
+        if (audio.readyState >= 1) go();
+        else audio.addEventListener('loadedmetadata', go, { once: true });
+    };
+
+    const saveCue = async (q, start, end) => {
+        setCueSaving(q.question_id);
+        try {
+            const res = await fetch(
+                `${API_BASE}/admin/listening-alignment/question/${q.question_id}/cue`,
+                { method: 'PUT',
+                  headers: { 'Content-Type': 'application/json',
+                             Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+                  body: JSON.stringify({ start, end }) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail || 'Lưu thất bại');
+            toast.success(`Câu ${q.order}: đã ghim ${start}s → ${end}s`);
+            openCuePanel(cuePanel.section_id);
+        } catch (e) {
+            toast.error(e.message);
+        } finally {
+            setCueSaving(null);
+        }
+    };
+
+    // Ghim hai đầu riêng biệt. Mỗi lần bấm là lưu ngay và tải lại bảng, nên lần bấm
+    // sau đã nhìn thấy giá trị của lần trước — ghim đầu rồi nghe tiếp rồi ghim cuối.
+    // Đầu kia luôn được suy ra để đoạn ghim hợp lệ ngay từ cú bấm đầu tiên: backend
+    // từ chối nếu kết thúc không sau bắt đầu.
+    const DEFAULT_SPAN = 5;   // giây, dùng khi mới chỉ ghim được một đầu
+
+    const audioNow = () => {
+        const cur = cueAudioRef.current?.currentTime;
+        if (cur == null || Number.isNaN(cur)) return null;
+        return Math.max(0, Math.round(cur * 10) / 10);
+    };
+
+    const pinStart = (q) => {
+        const start = audioNow();
+        if (start == null) return toast.error('Chưa phát được audio');
+        const end = (q.end != null && q.end > start)
+            ? q.end
+            : Math.round((start + DEFAULT_SPAN) * 10) / 10;
+        saveCue(q, start, end);
+    };
+
+    const pinEnd = (q) => {
+        const end = audioNow();
+        if (end == null) return toast.error('Chưa phát được audio');
+        const start = (q.start != null && q.start < end)
+            ? q.start
+            : Math.max(0, Math.round((end - DEFAULT_SPAN) * 10) / 10);
+        if (end <= start) {
+            return toast.error('Điểm kết thúc phải sau điểm bắt đầu — tua tới rồi ghim lại');
+        }
+        saveCue(q, start, end);
+    };
+
+    const clearCue = async (q) => {
+        setCueSaving(q.question_id);
+        try {
+            await fetch(`${API_BASE}/admin/listening-alignment/question/${q.question_id}/cue`,
+                { method: 'DELETE',
+                  headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } });
+            toast.success(`Câu ${q.order}: đã bỏ ghim, quay lại mốc tự động`);
+            openCuePanel(cuePanel.section_id);
+        } catch (e) {
+            toast.error('Không bỏ ghim được');
+        } finally {
+            setCueSaving(null);
+        }
+    };
+
     const steps = [
         { number: 1, label: 'Part 1' },
         { number: 2, label: 'Part 2' },
@@ -508,6 +697,95 @@ const EditListeningTest = () => {
                 currentStep={currentStep}
             />
 
+            {cuePanel && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+                        <div className="p-4 border-b flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">
+                                    Rà mốc audio — Part {cuePanel.part_number}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    {cuePanel.with_cue}/{cuePanel.total} câu đã có mốc.
+                                    Ghim tay luôn thắng mốc tự động và không bị mất khi gióng lại.
+                                </p>
+                            </div>
+                            <button onClick={() => setCuePanel(null)}
+                                    className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+                        </div>
+
+                        <div className="px-4 py-2 border-b bg-gray-50">
+                            <audio
+                                ref={cueAudioRef}
+                                controls
+                                preload="metadata"
+                                className="w-full"
+                                src={`${API_BASE}/admin/listening-alignment/section/${cuePanel.section_id}/audio?token=${encodeURIComponent(localStorage.getItem('access_token') || '')}`}
+                            />
+                        </div>
+
+                        <div className="flex-1 overflow-auto p-4 space-y-2">
+                            {cuePanel.questions.map((q) => (
+                                <div key={q.question_id}
+                                     className="flex items-center gap-3 border rounded-lg px-3 py-2 text-sm">
+                                    <span className="w-8 font-bold text-gray-700">{q.order}</span>
+                                    <span className="flex-1 text-gray-600 truncate" title={q.answer}>
+                                        {q.answer || <em className="text-gray-400">chưa có đáp án</em>}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                        q.source === 'manual' ? 'bg-violet-100 text-violet-700'
+                                        : q.source === 'locate' ? 'bg-emerald-100 text-emerald-700'
+                                        : q.source === 'answer' ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-500'}`}>
+                                        {q.source === 'manual' ? 'ghim tay'
+                                         : q.source === 'locate' ? 'từ locate'
+                                         : q.source === 'answer' ? 'từ đáp án'
+                                         : q.source === 'range' ? 'ước lượng' : 'chưa có'}
+                                    </span>
+                                    <span className="w-28 text-right text-gray-700 tabular-nums">
+                                        {q.start != null ? `${q.start}s → ${q.end}s` : '—'}
+                                    </span>
+                                    <button type="button"
+                                            onClick={() => previewCue(q.start, q.end)}
+                                            disabled={q.start == null}
+                                            className="text-emerald-700 hover:text-emerald-900 font-semibold disabled:opacity-30">
+                                        Nghe
+                                    </button>
+                                    <button type="button"
+                                            onClick={() => pinStart(q)}
+                                            disabled={cueSaving === q.question_id}
+                                            title="Lấy vị trí đang phát làm điểm bắt đầu"
+                                            className="text-violet-600 hover:text-violet-800 font-semibold disabled:opacity-50">
+                                            Ghim bắt đầu
+                                    </button>
+                                    <button type="button"
+                                            onClick={() => pinEnd(q)}
+                                            disabled={cueSaving === q.question_id}
+                                            title="Lấy vị trí đang phát làm điểm kết thúc"
+                                            className="text-violet-600 hover:text-violet-800 font-semibold disabled:opacity-50">
+                                            Ghim kết thúc
+                                    </button>
+                                    {q.source === 'manual' && (
+                                        <button type="button"
+                                                onClick={() => clearCue(q)}
+                                                disabled={cueSaving === q.question_id}
+                                                className="text-red-500 hover:text-red-700 font-semibold disabled:opacity-50">
+                                            Bỏ ghim
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="p-3 border-t bg-gray-50 text-xs text-gray-500">
+                            Cách dùng: tua tới ngay trước lúc đáp án được nói rồi bấm <b>Ghim bắt đầu</b>,
+                            nghe tiếp tới khi nói xong rồi bấm <b>Ghim kết thúc</b>. Mốc lưu ngay sau mỗi lần bấm;
+                            nếu mới ghim một đầu thì đầu còn lại tạm lấy cách {DEFAULT_SPAN} giây, ghim nốt là thay.
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Description Dialog */}
             <DescriptionDialog
                 isOpen={showDescriptionDialog}
@@ -569,6 +847,66 @@ const EditListeningTest = () => {
                         </div>
                     </div>
                 </div>
+                {alignParts.length > 0 && (
+                    <div className="max-w-7xl mx-auto px-4 pb-3">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="font-medium text-gray-600">Mốc thời gian audio:</span>
+                            {alignParts.map((p) => {
+                                const tone = p.status === 'ok'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : p.status === 'stale'
+                                        ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                        : 'bg-gray-50 text-gray-500 border-gray-200';
+                                return (
+                                    <span key={p.section_id}
+                                          title={p.note}
+                                          className={`inline-flex items-center gap-2 border rounded-lg px-2.5 py-1 ${tone}`}>
+                                        <span className="font-semibold">Part {p.part_number}</span>
+                                        <span>
+                                            {p.status === 'ok' && `phủ ${p.coverage_pct}%`}
+                                            {p.status === 'stale' && 'transcript/audio đã đổi'}
+                                            {p.status === 'missing' && 'chưa có'}
+                                            {p.status === 'no_transcript' && 'chưa có transcript'}
+                                            {p.status === 'no_audio' && 'chưa có audio'}
+                                            {p.status === 'audio_too_big' && 'audio quá lớn'}
+                                        </span>
+                                        {p.can_run && (
+                                            <button
+                                                type="button"
+                                                onClick={() => runAlignment(p.section_id)}
+                                                disabled={aligning === p.section_id}
+                                                className="text-violet-600 hover:text-violet-800 font-semibold disabled:opacity-50"
+                                            >
+                                                {aligning === p.section_id
+                                                    ? 'Đang chạy...'
+                                                    : (p.status === 'ok' ? 'Tạo lại' : 'Tạo mốc')}
+                                            </button>
+                                        )}
+                                        {p.status === 'ok' && p.part_number === currentStep && (
+                                            <button
+                                                type="button"
+                                                onClick={() => fetchLocateHints(p.section_id)}
+                                                disabled={hinting}
+                                                className="text-blue-600 hover:text-blue-800 font-semibold disabled:opacity-50"
+                                            >
+                                                {hinting ? 'Đang tìm...' : 'Gợi ý locate'}
+                                            </button>
+                                        )}
+                                        {p.status === 'ok' && p.part_number === currentStep && (
+                                            <button
+                                                type="button"
+                                                onClick={() => openCuePanel(p.section_id)}
+                                                className="text-emerald-700 hover:text-emerald-900 font-semibold"
+                                            >
+                                                Rà mốc
+                                            </button>
+                                        )}
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </nav>
 
             <Split
@@ -909,6 +1247,20 @@ const EditListeningTest = () => {
 
                     {/* Answers Section */}
                     <div className="flex-1 overflow-auto">
+                        {Object.keys(locateHints).length > 0 && (
+                            <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between text-sm">
+                                <span className="text-blue-800">
+                                    Đã có gợi ý locate cho {Object.values(locateHints).filter(h => h.suggestion).length} câu
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={applyAllHints}
+                                    className="font-semibold text-blue-700 hover:text-blue-900"
+                                >
+                                    Điền vào các ô đang trống / placeholder
+                                </button>
+                            </div>
+                        )}
                         <div className="bg-white p-4 border-b sticky top-0 z-10">
                             <h3 className="text-lg font-semibold text-gray-700 flex items-center">
                                 <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm mr-2">3</span>
@@ -932,13 +1284,30 @@ const EditListeningTest = () => {
                                             />
                                         </div>
                                         <div>
-                                            <span className="text-xs text-gray-500">Locate (text to highlight in transcript)</span>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-gray-500">Locate (text to highlight in transcript)</span>
+                                                {locateHints[index + 1]?.suggestion && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => applyHint(index)}
+                                                        title={locateHints[index + 1].suggestion}
+                                                        className="text-xs font-semibold text-violet-600 hover:text-violet-800"
+                                                    >
+                                                        Dùng gợi ý ({locateHints[index + 1].start}s)
+                                                    </button>
+                                                )}
+                                            </div>
                                             <input
                                                 value={question.locate || ''}
                                                 onChange={(e) => handleQuestionUpdate(index, 'locate', e.target.value)}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                                 placeholder="Enter the phrase to locate in transcript"
                                             />
+                                            {locateHints[index + 1]?.suggestion && (
+                                                <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                                                    Gợi ý: {locateHints[index + 1].suggestion}
+                                                </p>
+                                            )}
                                         </div>
                                         <div>
                                             <span className="text-xs text-gray-500">Explanation (supports rich text formatting)</span>
