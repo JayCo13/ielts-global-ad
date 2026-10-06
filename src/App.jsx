@@ -20,6 +20,7 @@ import Dashboard from './pages/Dashboard';
 import Setting from './pages/Setting';
 import Login from './pages/auth/Login';
 import Feedback from './pages/data/Feedback';
+import ErrorReports from './pages/admin/ErrorReports';
 import Key from './pages/data/Key';
 import Notification from './pages/data/Notification';
 import EditReadingTest from './pages/test/EditReadingTest';
@@ -95,6 +96,11 @@ function App() {
         <Route path="/feedback" element={
           <ProtectedRoute>
             <Feedback />
+          </ProtectedRoute>
+        } />
+        <Route path="/error-reports" element={
+          <ProtectedRoute>
+            <ErrorReports />
           </ProtectedRoute>
         } />
         <Route path="/create_student" element={
