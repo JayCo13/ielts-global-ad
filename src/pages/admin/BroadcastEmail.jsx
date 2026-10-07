@@ -49,7 +49,7 @@ function BroadcastEmail() {
         ${textHtml}
         ${imagesHtml ? `<div style="margin-top:16px;">${imagesHtml}</div>` : ''}
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0 16px;" />
-        <p style="font-size:12px;color:#999;text-align:center;">IELTS Computer Test — ieltscomputertest.com</p>
+        <p style="font-size:12px;color:#999;text-align:center;">IELTS Computer Test — englishoncomputer.com</p>
       </div>
     `.trim();
   };
