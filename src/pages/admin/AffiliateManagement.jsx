@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from '../../partials/Sidebar';
 import Header from '../../partials/Header';
 import { API_BASE } from '../../config/api';
+import { vndAsUsd } from '../../utils/money';
 
 const fmt = (n) => (n == null ? '0' : Number(n).toLocaleString('vi-VN'));
 // Global: wallet amounts are integers in the currency's minor unit (VND: 1 = 1đ,
@@ -39,6 +40,148 @@ const downloadQr = async (absUrl, name) => {
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     } catch (e) { window.open(absUrl, '_blank'); }
 };
+
+/**
+ * Assign a referrer by hand (ported from the Vietnam admin), for accounts whose
+ * referral code was lost at sign-up.
+ *
+ * Global difference: commission is credited by reconciliation, so every VIP order the
+ * account has already paid for is credited to the affiliate as soon as it is assigned —
+ * there is no "assign without paying past orders" option. The amount is shown first.
+ */
+function ManualAttribution({ cur }) {
+    const [q, setQ] = useState('');
+    const [rows, setRows] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [open, setOpen] = useState(null);      // user đang gán
+    const [code, setCode] = useState('');
+    const [owner, setOwner] = useState(null);    // chủ mã, tra ra để nhìn trước khi bấm
+    const [busy, setBusy] = useState(false);
+    const [msg, setMsg] = useState('');
+    const [err, setErr] = useState('');
+
+    const search = async () => {
+        setLoading(true); setErr('');
+        try {
+            const d = await authed(`/admin/affiliate/unattributed?q=${encodeURIComponent(q)}`);
+            setRows(d.users || []);
+        } catch (e) { setErr(e.message); } finally { setLoading(false); }
+    };
+
+    const lookup = async (value) => {
+        setCode(value); setOwner(null); setErr('');
+        const c = value.trim();
+        if (c.length < 4) return;
+        try { setOwner(await authed(`/admin/affiliate/lookup?code=${encodeURIComponent(c)}`)); }
+        catch (e) { setOwner(null); }
+    };
+
+    const submit = async () => {
+        setBusy(true); setErr(''); setMsg('');
+        try {
+            const d = await authed('/admin/affiliate/attribute', {
+                method: 'POST',
+                body: JSON.stringify({ user_id: open.user_id, ref_code: code.trim() }),
+            });
+            setMsg(`Đã gán ${open.username} cho ${d.referrer_name}`
+                + (d.backfilled_orders ? `, bù ${d.backfilled_orders} đơn = ${money(d.backfilled_xu, cur)}` : ''));
+            setOpen(null); setCode(''); setOwner(null);
+            setRows(rows.filter(r => r.user_id !== open.user_id));
+        } catch (e) { setErr(e.message); } finally { setBusy(false); }
+    };
+
+    return (
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700/60 p-4 mb-6">
+            <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">Gán người giới thiệu thủ công</div>
+            <div className="text-xs text-gray-500 mt-1 mb-3">
+                Dành cho tài khoản chưa thuộc affiliate nào (mã giới thiệu bị rơi mất lúc đăng ký).
+                Gán xong, hoa hồng của các đơn VIP tài khoản đó đã mua sẽ được cộng ngay cho affiliate.
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+                <input value={q} onChange={e => setQ(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && search()}
+                    placeholder="Tìm tài khoản chưa có người giới thiệu (tên hoặc email)…"
+                    className="form-input w-full sm:flex-1" />
+                <button onClick={search} disabled={loading}
+                    className="btn bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50">
+                    {loading ? 'Đang tìm…' : 'Tìm'}
+                </button>
+            </div>
+
+            {msg && <div className="mt-3 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">{msg}</div>}
+            {err && <div className="mt-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{err}</div>}
+
+            {rows.length > 0 && (
+                <div className="mt-3 overflow-x-auto">
+                    <table className="table-auto w-full text-sm">
+                        <thead className="text-xs uppercase text-gray-400 border-b border-gray-100 dark:border-gray-700/60">
+                            <tr>
+                                <th className="px-3 py-2 text-left">Tài khoản</th>
+                                <th className="px-3 py-2 text-left">Email</th>
+                                <th className="px-3 py-2 text-left">Đăng ký</th>
+                                <th className="px-3 py-2 text-right">Đơn VIP đã mua</th>
+                                <th className="px-3 py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
+                            {rows.map(r => (
+                                <tr key={r.user_id}>
+                                    <td className="px-3 py-2 font-medium text-gray-800 dark:text-gray-100">{r.username}</td>
+                                    <td className="px-3 py-2 text-gray-500">{r.email || '—'}</td>
+                                    <td className="px-3 py-2 text-gray-500">
+                                        {r.created_at ? new Date(r.created_at).toLocaleDateString('vi-VN') : '—'}
+                                        {r.via_google && <span className="ml-1 text-[11px] text-amber-600">Google</span>}
+                                    </td>
+                                    <td className="px-3 py-2 text-right text-gray-600">
+                                        {r.paid_orders ? `${r.paid_orders} đơn · ${vndAsUsd(r.paid_amount)}` : '—'}
+                                    </td>
+                                    <td className="px-3 py-2 text-right">
+                                        <button onClick={() => { setOpen(r); setCode(''); setOwner(null); setMsg(''); }}
+                                            className="text-indigo-600 hover:underline font-medium">Gán</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {open && (
+                <div className="mt-4 border-t border-gray-100 dark:border-gray-700/60 pt-4">
+                    <div className="text-sm text-gray-700 dark:text-gray-200 mb-2">
+                        Gán <b>{open.username}</b> cho affiliate nào?
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <input value={code} onChange={e => lookup(e.target.value)}
+                            placeholder="Mã giới thiệu của affiliate" className="form-input w-full sm:flex-1" />
+                        <button onClick={submit} disabled={busy || !owner}
+                            className="btn bg-green-600 hover:bg-green-700 text-white disabled:opacity-50">
+                            {busy ? 'Đang gán…' : 'Xác nhận'}
+                        </button>
+                        <button onClick={() => { setOpen(null); setCode(''); setOwner(null); }}
+                            className="btn border-gray-200 hover:border-gray-300 text-gray-600">Huỷ</button>
+                    </div>
+                    {/* Bắt buộc tra ra chủ mã rồi mới cho bấm: gõ nhầm một ký tự là tiền chạy
+                        sang tài khoản khác, mà gán rồi thì không gỡ được bằng giao diện. */}
+                    <div className="text-xs mt-2">
+                        {owner
+                            ? <span className="text-green-700">Mã này của <b>{owner.username}</b> ({owner.email})</span>
+                            : code.trim().length >= 4
+                                ? <span className="text-red-600">Không tìm thấy mã này</span>
+                                : <span className="text-gray-400">Nhập mã để kiểm tra chủ sở hữu</span>}
+                    </div>
+                    {open.paid_orders > 0 && (
+                        <div className="mt-3 text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                            Affiliate sẽ được cộng hoa hồng cho {open.paid_orders} đơn VIP đã mua trước đó
+                            <span className="text-amber-600"> (≈ {vndAsUsd(Math.round(open.paid_amount * 0.1))})</span>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
 
 const STATUS = {
     pending: { label: 'Chờ xử lý', cls: 'text-amber-700 bg-amber-100' },
@@ -153,6 +296,8 @@ function AffiliateManagement() {
                             ))}
                         </div>
 
+
+                        <ManualAttribution cur={overview} />
 
                         {/* Filters */}
                         <div className="flex flex-col sm:flex-row gap-3 mb-4">

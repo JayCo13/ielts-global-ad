@@ -29,6 +29,68 @@ const QUESTION_TYPES = {
   ]
 };
 
+// Question-type tags as in the Vietnam admin: stored in `question_type_tags`, which is
+// what the imported content carries and what the student-side filters read.
+const QUESTION_TYPE_TAGS = [
+  { value: 'true_false_ng', label: 'True/False/NG' },
+  { value: 'yes_no_ng', label: 'Yes/No/NG' },
+  { value: 'fill_blank', label: 'Fill in Blank' },
+  { value: 'multiple_choice', label: 'Multiple Choice (Single Answer)' },
+  { value: 'checkbox', label: 'Multiple Choice (Multiple Answers)' },
+  { value: 'matching', label: 'Matching Information' },
+  { value: 'matching_headings', label: 'Matching Headings' },
+  { value: 'matching_features_drag', label: 'Matching Features (Drag-and-drop)' },
+  { value: 'matching_features_table', label: 'Matching Features (Table)' },
+  { value: 'matching_sentence_endings', label: 'Matching Sentence Endings' },
+  { value: 'sentence_completion', label: 'Sentence Completion' },
+  { value: 'summary_completion', label: 'Summary Completion' },
+  { value: 'summary_completion_word_list', label: 'Summary Completion (With Word List)' },
+  { value: 'short_answer', label: 'Short Answer' },
+  { value: 'diagram_labelling', label: 'Diagram Labelling' },
+  { value: 'map_labelling', label: 'Map Labelling' },
+  { value: 'note_completion', label: 'Note Completion' },
+  { value: 'table_completion', label: 'Table Completion' },
+  { value: 'flow_chart', label: 'Flow Chart' },
+
+  // Writing Task 1
+  { value: 'line', label: 'Line' },
+  { value: 'bar', label: 'Bar' },
+  { value: 'pie', label: 'Pie' },
+  { value: 'table', label: 'Table' },
+  { value: 'map', label: 'Map' },
+  { value: 'process', label: 'Process' },
+  { value: 'mixed_task1', label: 'Mixed (Task 1)' },
+
+  // Writing Task 2
+  { value: 'agree_disagree', label: 'Agree or disagree' },
+  { value: 'negative_positive', label: 'Negative or positive' },
+  { value: 'advantages_disadvantages', label: 'Advantages outweigh disadvantages' },
+  { value: 'discuss_opinion', label: 'Discuss both views and give your opinion' },
+  { value: 'solutions_effects', label: 'Two parts: Solutions - effects' },
+  { value: 'two_parts_mixed', label: 'Two parts: Mixed' },
+];
+
+const TagPicker = ({ value, onChange }) => (
+  <div className="flex flex-wrap gap-2">
+    {QUESTION_TYPE_TAGS.map(qt => {
+      const selected = (value || []).includes(qt.value);
+      return (
+        <button
+          key={qt.value}
+          type="button"
+          onClick={() => onChange(selected ? (value || []).filter(t => t !== qt.value) : [...(value || []), qt.value])}
+          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected
+            ? 'bg-violet-600 text-white border-violet-600'
+            : 'bg-white text-gray-600 border-gray-200 hover:border-violet-400 hover:text-violet-600'
+            }`}
+        >
+          {qt.label}
+        </button>
+      );
+    })}
+  </div>
+);
+
 const skillLabel = (types) => {
   if (!types || types.length === 0) return 'Unknown';
   if (types.includes('essay')) return 'writing';
@@ -205,7 +267,8 @@ const ManageForecast = () => {
           is_forecast: !!s.is_forecast,
           forecast_title: s.forecast_title || '',
           is_recommended: !!s.is_recommended,
-          question_types: Array.isArray(s.question_types) ? s.question_types : []
+          question_types: Array.isArray(s.question_types) ? s.question_types : [],
+            question_type_tags: Array.isArray(s.question_type_tags) ? s.question_type_tags : []
         })));
       } else {
         try {
@@ -218,7 +281,8 @@ const ManageForecast = () => {
             is_forecast: !!s.is_forecast,
             forecast_title: s.forecast_title || '',
             is_recommended: !!s.is_recommended,
-            question_types: Array.isArray(s.question_types) ? s.question_types : []
+            question_types: Array.isArray(s.question_types) ? s.question_types : [],
+            question_type_tags: Array.isArray(s.question_type_tags) ? s.question_type_tags : []
           })));
         } catch (e) {
           toast.error('Failed to load listening parts');
@@ -236,7 +300,8 @@ const ManageForecast = () => {
           is_forecast: !!s.is_forecast,
           forecast_title: s.forecast_title || '',
           is_recommended: !!s.is_recommended,
-          question_types: Array.isArray(s.question_types) ? s.question_types : []
+          question_types: Array.isArray(s.question_types) ? s.question_types : [],
+            question_type_tags: Array.isArray(s.question_type_tags) ? s.question_type_tags : []
         })));
       } else {
         try {
@@ -249,7 +314,8 @@ const ManageForecast = () => {
             is_forecast: !!s.is_forecast,
             forecast_title: s.forecast_title || '',
             is_recommended: !!s.is_recommended,
-            question_types: Array.isArray(s.question_types) ? s.question_types : []
+            question_types: Array.isArray(s.question_types) ? s.question_types : [],
+            question_type_tags: Array.isArray(s.question_type_tags) ? s.question_type_tags : []
           })));
         } catch (e) {
           toast.error('Failed to load reading parts');
@@ -271,7 +337,8 @@ const ManageForecast = () => {
         ...p,
         title: p.title || '',
         is_forecast: !!p.is_forecast,
-        is_recommended: !!p.is_recommended
+        is_recommended: !!p.is_recommended,
+        question_type_tags: p.question_type_tags || []
       })));
     } else {
       try {
@@ -280,7 +347,7 @@ const ManageForecast = () => {
         });
         const data = await res.json();
         const match = (Array.isArray(data) ? data : []).find(x => x.test_id === test.exam_id);
-        setParts(match ? match.parts.map(p => ({ ...p, title: p.title || '', is_forecast: !!p.is_forecast, is_recommended: !!p.is_recommended })) : []);
+        setParts(match ? match.parts.map(p => ({ ...p, title: p.title || '', is_forecast: !!p.is_forecast, is_recommended: !!p.is_recommended, question_type_tags: p.question_type_tags || [] })) : []);
       } catch (e) {
         toast.error('Failed to load writing parts');
         setParts([]);
@@ -306,7 +373,8 @@ const ManageForecast = () => {
             is_forecast: !!p.is_forecast,
             is_recommended: !!p.is_recommended,
             task1_type: p.part_number === 1 ? (p.task1_type || '') : null,
-            task2_type: p.part_number === 2 ? (p.task2_type || '') : null
+            task2_type: p.part_number === 2 ? (p.task2_type || '') : null,
+            question_type_tags: p.question_type_tags || []
           })
         });
         if (!res.ok) {
@@ -326,7 +394,8 @@ const ManageForecast = () => {
             is_forecast: !!p.is_forecast,
             forecast_title: p.is_forecast ? (p.forecast_title || '') : null,
             is_recommended: !!p.is_recommended,
-            question_types: p.question_types || []
+            question_types: p.question_types || [],
+            question_type_tags: p.question_type_tags || []
           })
         });
         if (!res.ok) {
@@ -346,7 +415,8 @@ const ManageForecast = () => {
             is_forecast: !!p.is_forecast,
             forecast_title: p.is_forecast ? (p.forecast_title || '') : null,
             is_recommended: !!p.is_recommended,
-            question_types: p.question_types || []
+            question_types: p.question_types || [],
+            question_type_tags: p.question_type_tags || []
           })
         });
         if (!res.ok) {
@@ -557,7 +627,7 @@ const ManageForecast = () => {
                         setParts(next);
                       }}
                       className={`p-1.5 rounded-lg transition-colors ${p.is_recommended ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}
-                      title={p.is_recommended ? 'Recommended' : 'Mark as recommended'}
+                      title={p.is_recommended ? 'Highly Forecast' : 'Mark as Highly Forecast'}
                     >
                       <Star className="w-5 h-5" fill={p.is_recommended ? 'currentColor' : 'none'} />
                     </button>
@@ -571,6 +641,7 @@ const ManageForecast = () => {
                     next[idx] = { ...p, forecast_title: e.target.value };
                     setParts(next);
                   }}
+                  onBlur={() => savePart(p)}  /* auto-save when leaving the title box (as in VN) */
                   placeholder="Forecast title (optional)"
                   className="mt-3 w-full px-3 py-2 border rounded"
                 />
@@ -579,31 +650,11 @@ const ManageForecast = () => {
                     <Tag className="w-3.5 h-3.5" />
                     <span>Question Types</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(QUESTION_TYPES.listening || []).map(qt => {
-                      const active = (p.question_types || []).includes(qt);
-                      return (
-                        <button
-                          key={qt}
-                          type="button"
-                          onClick={() => {
-                            const next = [...parts];
-                            const current = p.question_types || [];
-                            const updated = active ? current.filter(t => t !== qt) : [...current, qt];
-                            next[idx] = { ...p, question_types: updated };
-                            setParts(next);
-                          }}
-                          className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
-                            active
-                              ? 'bg-violet-100 border-violet-400 text-violet-700'
-                              : 'bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600'
-                          }`}
-                        >
-                          {qt}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <TagPicker value={p.question_type_tags} onChange={(tags) => {
+                    const next = [...parts];
+                    next[idx] = { ...p, question_type_tags: tags };
+                    setParts(next);
+                  }} />
                 </div>
                 <div className="mt-3 flex justify-end">
                   <button disabled={saving} onClick={() => savePart(p)} className="px-3 py-1 bg-violet-600 text-white rounded">Save</button>
@@ -637,7 +688,7 @@ const ManageForecast = () => {
                         setParts(next);
                       }}
                       className={`p-1.5 rounded-lg transition-colors ${p.is_recommended ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}
-                      title={p.is_recommended ? 'Recommended' : 'Mark as recommended'}
+                      title={p.is_recommended ? 'Highly Forecast' : 'Mark as Highly Forecast'}
                     >
                       <Star className="w-5 h-5" fill={p.is_recommended ? 'currentColor' : 'none'} />
                     </button>
@@ -652,6 +703,7 @@ const ManageForecast = () => {
                     next[idx] = { ...p, forecast_title: e.target.value };
                     setParts(next);
                   }}
+                  onBlur={() => savePart(p)}  /* auto-save when leaving the title box (as in VN) */
                   placeholder="Forecast title (optional)"
                   className="mt-3 w-full px-3 py-2 border rounded"
                 />
@@ -660,31 +712,11 @@ const ManageForecast = () => {
                     <Tag className="w-3.5 h-3.5" />
                     <span>Question Types</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(QUESTION_TYPES.reading || []).map(qt => {
-                      const active = (p.question_types || []).includes(qt);
-                      return (
-                        <button
-                          key={qt}
-                          type="button"
-                          onClick={() => {
-                            const next = [...parts];
-                            const current = p.question_types || [];
-                            const updated = active ? current.filter(t => t !== qt) : [...current, qt];
-                            next[idx] = { ...p, question_types: updated };
-                            setParts(next);
-                          }}
-                          className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
-                            active
-                              ? 'bg-violet-100 border-violet-400 text-violet-700'
-                              : 'bg-white border-gray-200 text-gray-500 hover:border-violet-300 hover:text-violet-600'
-                          }`}
-                        >
-                          {qt}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <TagPicker value={p.question_type_tags} onChange={(tags) => {
+                    const next = [...parts];
+                    next[idx] = { ...p, question_type_tags: tags };
+                    setParts(next);
+                  }} />
                 </div>
                 <div className="mt-3 flex justify-end">
                   <button disabled={saving} onClick={() => savePart(p)} className="px-3 py-1 bg-violet-600 text-white rounded">Save</button>
@@ -717,7 +749,7 @@ const ManageForecast = () => {
                         setParts(next);
                       }}
                       className={`p-1.5 rounded-lg transition-colors ${p.is_recommended ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}
-                      title={p.is_recommended ? 'Recommended' : 'Mark as recommended'}
+                      title={p.is_recommended ? 'Highly Forecast' : 'Mark as Highly Forecast'}
                     >
                       <Star className="w-5 h-5" fill={p.is_recommended ? 'currentColor' : 'none'} />
                     </button>
@@ -731,6 +763,7 @@ const ManageForecast = () => {
                     next[idx] = { ...p, title: e.target.value };
                     setParts(next);
                   }}
+                  onBlur={() => savePart(p)}  /* auto-save when leaving the title box (as in VN) */
                   placeholder="Part title"
                   className="mt-3 w-full px-3 py-2 border rounded"
                 />
@@ -783,6 +816,14 @@ const ManageForecast = () => {
                     </select>
                   </div>
                 )}
+                <div className="mt-3">
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Question Types</label>
+                  <TagPicker value={p.question_type_tags} onChange={(tags) => {
+                    const next = [...parts];
+                    next[idx] = { ...p, question_type_tags: tags };
+                    setParts(next);
+                  }} />
+                </div>
                 <div className="mt-3 flex justify-end">
                   <button disabled={saving} onClick={() => savePart(p)} className="px-3 py-1 bg-violet-600 text-white rounded">Save</button>
                 </div>

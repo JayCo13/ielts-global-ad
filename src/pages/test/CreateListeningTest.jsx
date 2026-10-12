@@ -112,13 +112,16 @@ const CreateListeningTest = () => {
         questions: Array(10).fill(null).map(() => getInitialQuestionState())
     });
 
+    // Single editor for the part transcript (VN fix). The transcript carries bolded
+    // numbered markers (<strong>1</strong>, …) that the backend parses into per-question
+    // contexts. It is NOT mirrored into questions[*].question_text: doing so wiped the
+    // transcript when the admin switched question, and put the whole transcript into
+    // the first question (it then showed up as the test card title for students).
     const handleEditorChange = (content) => {
         setEditorContent(content);
-        const updatedQuestions = [...currentPart.questions];
-        updatedQuestions[currentIndex].question_text = content;
         setCurrentPart({
             ...currentPart,
-            questions: updatedQuestions
+            transcript: content
         });
     };
 
@@ -254,6 +257,8 @@ const CreateListeningTest = () => {
                     transcript: '',
                     questions: Array(10).fill(null).map(() => getInitialQuestionState())
                 });
+                setEditorContent('');
+                setCurrentIndex(0);
                 setCurrentStep(partNumber + 2);
                 toast.success(`Part ${partNumber} saved successfully!`);
             } else {
@@ -464,7 +469,7 @@ const CreateListeningTest = () => {
                                 <Editor
                                     apiKey="ok9tvg12zhhtkqesikbr69kxyz6dpck2aesuejwn8b7qcw4l"
                                     onInit={(evt, editor) => editorRef.current = editor}
-                                    value={currentPart.questions[currentIndex]?.question_text}
+                                    value={editorContent}
                                     init={{
                                         height: '100%',
                                         menubar: false,
