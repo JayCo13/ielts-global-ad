@@ -78,7 +78,7 @@ function AffiliateManagement() {
         let body;
         if (action === 'reject') {
             const reason = window.prompt(
-                'Nhập lý do từ chối (sẽ hiển thị cho user để họ sửa & gửi lại, vd: "Chưa upload mã QR hợp lệ").\nSố tiền sẽ được hoàn lại vào ví của user.'
+                'Nhập lý do từ chối (sẽ hiển thị cho user để họ sửa & gửi lại, vd: "Email PayPal không nhận được tiền").\nSố tiền sẽ được hoàn lại vào ví của user.'
             );
             if (reason === null) return;            // user cancelled
             if (!reason.trim()) { alert('Vui lòng nhập lý do từ chối.'); return; }
@@ -220,8 +220,8 @@ function AffiliateManagement() {
                                                     <tr key={r.withdrawal_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40 cursor-pointer" onClick={() => openDetail(r.withdrawal_id)}>
                                                         <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{r.username}</td>
                                                         <td className="px-4 py-3 text-gray-500">{r.email || '—'}</td>
-                                                        <td className="px-4 py-3 text-right tabular-nums text-gray-600">{fmt(r.balance)}</td>
-                                                        <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-800 dark:text-gray-100">{fmt(r.amount)}</td>
+                                                        <td className="px-4 py-3 text-right tabular-nums text-gray-600">{money(r.balance, overview)}</td>
+                                                        <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-800 dark:text-gray-100">{money(r.amount, overview)}</td>
                                                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{r.created_at ? new Date(r.created_at).toLocaleDateString('vi-VN') : '—'}</td>
                                                         <td className="px-4 py-3 text-center text-gray-500">{r.days_waiting} ngày</td>
                                                         <td className="px-4 py-3 text-center">
@@ -255,9 +255,9 @@ function AffiliateManagement() {
                             {[
                                 ['Tài khoản', detail.username],
                                 ['Email', detail.email || '—'],
-                                ['Chủ tài khoản', detail.account_holder || '—'],
-                                ['Số tài khoản', detail.account_number || '—'],
-                                ['Ngân hàng', detail.bank || '—'],
+                                ['Tên trên PayPal', detail.account_holder || '—'],
+                                ['Email PayPal', detail.account_number || '—'],
+                                ['Phương thức', detail.bank || 'PayPal'],
                                 ['Số tiền yêu cầu', `${money(detail.amount, overview)}`],
                                 ['Số dư ví hiện tại', `${money(detail.current_balance, overview)}`],
                                 ['Ngày gửi', detail.created_at ? new Date(detail.created_at).toLocaleString('vi-VN') : '—'],
