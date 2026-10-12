@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PowerOff, Home, ChevronRight, Plus, Edit, Eye,FileText, Trash2, AlertTriangle, Power } from 'lucide-react';
 import { format } from 'date-fns';
@@ -34,6 +34,19 @@ const [loading, setLoading] = useState(false);
     const [sampleTasks, setSampleTasks] = useState([]);
     const [samplePart1, setSamplePart1] = useState('');
     const [samplePart2, setSamplePart2] = useState('');
+    const sampleP1Ref = useRef(null);
+    const sampleP2Ref = useRef(null);
+    // Wrap the current textarea selection in **…** (bold marker rendered as <strong> on the student side).
+    const wrapBold = (ref, value, setValue) => {
+        const el = ref.current;
+        if (!el) return;
+        const start = el.selectionStart, end = el.selectionEnd;
+        if (start === end) return;   // nothing selected
+        const next = value.slice(0, start) + '**' + value.slice(start, end) + '**' + value.slice(end);
+        setValue(next);
+        // restore selection just inside the new markers
+        requestAnimationFrame(() => { el.focus(); el.setSelectionRange(start + 2, end + 2); });
+    };
     const [savingSample, setSavingSample] = useState(false);
     const [readingForecastMap, setReadingForecastMap] = useState({});
 
@@ -297,12 +310,19 @@ const [loading, setLoading] = useState(false);
                                 <Dialog.Title className="text-lg font-medium text-gray-900 dark:text-white">Add Sample Essay</Dialog.Title>
                                 <div className="mt-4 space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Part 1 Sample</label>
-                                        <textarea value={samplePart1} onChange={(e) => setSamplePart1(e.target.value)} rows={8} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Part 1 Sample</label>
+                                            <button type="button" onClick={() => wrapBold(sampleP1Ref, samplePart1, setSamplePart1)} title="Bôi đen chữ rồi bấm để in đậm" className="inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"><b>B</b> In đậm</button>
+                                        </div>
+                                        <textarea ref={sampleP1Ref} value={samplePart1} onChange={(e) => setSamplePart1(e.target.value)} rows={8} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                        <p className="mt-1 text-xs text-gray-400">Bôi đen chữ rồi bấm <b>In đậm</b> (bọc <code>**…**</code>) — học viên sẽ thấy chữ in đậm.</p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Part 2 Sample</label>
-                                        <textarea value={samplePart2} onChange={(e) => setSamplePart2(e.target.value)} rows={8} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Part 2 Sample</label>
+                                            <button type="button" onClick={() => wrapBold(sampleP2Ref, samplePart2, setSamplePart2)} title="Bôi đen chữ rồi bấm để in đậm" className="inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"><b>B</b> In đậm</button>
+                                        </div>
+                                        <textarea ref={sampleP2Ref} value={samplePart2} onChange={(e) => setSamplePart2(e.target.value)} rows={8} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
                                     </div>
                                 </div>
                                 <div className="mt-6 flex justify-end space-x-3">

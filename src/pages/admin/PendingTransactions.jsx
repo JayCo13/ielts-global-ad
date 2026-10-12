@@ -327,27 +327,79 @@ const PendingTransactions = () => {
                 </div>
 
                 {/* Pagination */}
-                <div className="px-6 py-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, transactions.length)} of {transactions.length} transactions
-                    </div>
-                    <div className="flex space-x-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                {totalPages > 1 && (
+                  <div className="px-6 py-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, sortedAndFilteredTransactions.length)} of {sortedAndFilteredTransactions.length} transactions
+                      </div>
+                      <div className="flex space-x-1">
                         <button
-                          key={number}
-                          onClick={() => paginate(number)}
-                          className={`px-3 py-1 text-sm rounded-md ${currentPage === number
-                            ? 'bg-violet-600 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                          onClick={() => paginate(currentPage > 1 ? currentPage - 1 : 1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 text-sm rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {number}
+                          Trước
                         </button>
-                      ))}
+                        
+                        {(() => {
+                          const maxVisiblePages = 5;
+                          let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                          let endPage = startPage + maxVisiblePages - 1;
+
+                          if (endPage > totalPages) {
+                            endPage = totalPages;
+                            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                          }
+
+                          const pages = [];
+                          for (let i = startPage; i <= endPage; i++) {
+                            pages.push(i);
+                          }
+
+                          return (
+                            <>
+                              {startPage > 1 && (
+                                <>
+                                  <button onClick={() => paginate(1)} className="px-3 py-1 text-sm rounded-md text-gray-700 hover:bg-gray-100">1</button>
+                                  {startPage > 2 && <span className="px-2 py-1 text-gray-500">...</span>}
+                                </>
+                              )}
+                              
+                              {pages.map((number) => (
+                                <button
+                                  key={number}
+                                  onClick={() => paginate(number)}
+                                  className={`px-3 py-1 text-sm rounded-md ${currentPage === number
+                                    ? 'bg-violet-600 text-white'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                                    }`}
+                                >
+                                  {number}
+                                </button>
+                              ))}
+
+                              {endPage < totalPages && (
+                                <>
+                                  {endPage < totalPages - 1 && <span className="px-2 py-1 text-gray-500">...</span>}
+                                  <button onClick={() => paginate(totalPages)} className="px-3 py-1 text-sm rounded-md text-gray-700 hover:bg-gray-100">{totalPages}</button>
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
+
+                        <button
+                          onClick={() => paginate(currentPage < totalPages ? currentPage + 1 : totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 text-sm rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Sau
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </>
             )}
           </div>

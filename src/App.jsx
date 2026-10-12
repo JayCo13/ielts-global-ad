@@ -23,6 +23,7 @@ import Feedback from './pages/data/Feedback';
 import ErrorReports from './pages/admin/ErrorReports';
 import Announcements from './pages/admin/Announcements';
 import BroadcastEmail from './pages/admin/BroadcastEmail';
+import RevenueAnalytics from './pages/admin/RevenueAnalytics';
 import AffiliateManagement from './pages/admin/AffiliateManagement';
 import Key from './pages/data/Key';
 import Notification from './pages/data/Notification';
@@ -227,6 +228,12 @@ function App() {
         <Route path="/marketing-email" element={
           <ProtectedRoute>
             <MarketingEmail />
+          </ProtectedRoute>
+        } />
+        {/* Revenue analytics: day / month / quarter / year comparisons (ported from VN) */}
+        <Route path="/revenue-analytics" element={
+          <ProtectedRoute>
+            <RevenueAnalytics />
           </ProtectedRoute>
         } />
         {/* Email broadcast with history/status (ported from VN) */}

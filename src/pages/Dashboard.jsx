@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../partials/Sidebar';
 import Header from '../partials/Header';
 import { UserCircle, RefreshCw, Users, Package, DollarSign, TrendingUp, Clock, AlertCircle, BookOpen, PenTool, Calendar, BarChart3 } from 'lucide-react';
@@ -8,6 +9,7 @@ import API_BASE from '../config/api';
 import { vndAsUsd, vndToUsd, formatUsd } from '../utils/money';
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [exams, setExams] = useState([]);
   const [hasNewNotification, setHasNewNotification] = useState(false);
@@ -275,6 +277,13 @@ function Dashboard() {
                         </button>
                       ))}
                     </div>
+                    <button
+                      onClick={() => navigate('/revenue-analytics')}
+                      className="px-4 py-1.5 text-sm font-semibold rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 transition-all flex items-center gap-1.5"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      Xem chi tiết
+                    </button>
                   </div>
                   {/* Revenue Summary Cards */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 border-b border-gray-100 dark:border-gray-700">
