@@ -30,7 +30,7 @@ const VIPPackageManagement = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Không thể tải dữ liệu gói dịch vụ');
+        throw new Error('Could not load packages');
       }
 
       const data = await response.json();
@@ -97,10 +97,10 @@ const VIPPackageManagement = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Không thể cập nhật trạng thái gói');
+        throw new Error(errorData.detail || 'Could not update the package status');
       }
 
-      toast.success(pkg.is_active ? 'Đã vô hiệu hóa gói thành công!' : 'Đã kích hoạt gói thành công!');
+      toast.success(pkg.is_active ? 'Package deactivated.' : 'Package activated.');
       fetchPackages();
     } catch (err) {
       toast.error(err.message);
@@ -108,7 +108,7 @@ const VIPPackageManagement = () => {
   };
 
   const handleDeletePackage = async (pkg) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa gói "${pkg.name}"?`)) return;
+    if (!window.confirm(`Delete the package "${pkg.name}"?`)) return;
     
     try {
       const response = await fetchWithTimeout(`${API_BASE}/admin/vip/packages/${pkg.package_id}`, {
@@ -120,10 +120,10 @@ const VIPPackageManagement = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Không thể xóa gói');
+        throw new Error(errorData.detail || 'Could not delete the package');
       }
 
-      toast.success('Đã xóa gói thành công!');
+      toast.success('Package deleted.');
       fetchPackages();
     } catch (err) {
       toast.error(err.message);
@@ -155,7 +155,7 @@ const VIPPackageManagement = () => {
 
             <ChevronRight size={16} className="text-gray-400" />
             <span className="text-violet-600 dark:text-violet-400">
-              Quản lý gói VIP
+              VIP Packages
             </span>
           </div>
         </div>
@@ -163,13 +163,13 @@ const VIPPackageManagement = () => {
 
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Quản lý gói VIP</h1>
+          <h1 className="text-2xl font-bold text-gray-800">VIP Packages</h1>
           <button
             onClick={handleCreatePackage}
             className="px-4 py-2 bg-violet-600 text-white rounded-md flex items-center"
           >
             <Plus size={18} className="mr-2" />
-            Tạo gói mới
+            New package
           </button>
         </div>
 
@@ -185,7 +185,7 @@ const VIPPackageManagement = () => {
         {loading ? (
           <div className="text-center py-10">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-violet-500 border-t-transparent"></div>
-            <p className="mt-2 text-gray-600">Đang tải dữ liệu gói...</p>
+            <p className="mt-2 text-gray-600">Loading packages...</p>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -193,21 +193,21 @@ const VIPPackageManagement = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Tên gói</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Kỹ năng</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Thời hạn</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Giá</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Thanh toán</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Trạng thái</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ngày tạo</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Hành động</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Package</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Skills</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Duration</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Lemon Squeezy</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Created</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedPackages.length === 0 ? (
                     <tr>
                       <td colSpan="8" className="px-6 py-4 text-center text-sm text-gray-500">
-                        Không tìm thấy gói dịch vụ nào. Hãy tạo gói đầu tiên của bạn!
+                        No packages yet. Create your first one.
                       </td>
                     </tr>
                   ) : (
@@ -217,10 +217,10 @@ const VIPPackageManagement = () => {
                           <div className="text-sm font-medium text-gray-900 truncate" title={pkg.name}>{pkg.name}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {pkg.package_type === 'all_skills' ? 'Tất cả kỹ năng' : 'Một kỹ năng'}
+                          {pkg.package_type === 'all_skills' ? 'All skills' : 'Single skill'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {pkg.duration_months} tháng
+                          {pkg.duration_months} mo
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatPrice(pkg.price)}
@@ -228,18 +228,18 @@ const VIPPackageManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {pkg.ls_variant_id ? (
                             <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800" title={`Variant ID: ${pkg.ls_variant_id}`}>
-                              ✓ Đã kết nối
+                              ✓ Variant linked
                             </span>
                           ) : (
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
-                              ⚠ Chưa cấu hình
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600" title="Only needed for Lemon Squeezy checkout. PayOS checkout does not use a variant.">
+                              — Not linked
                             </span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}>
-                            {pkg.is_active ? 'Hoạt động' : 'Không hoạt động'}
+                            {pkg.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -250,7 +250,7 @@ const VIPPackageManagement = () => {
                             <button
                               onClick={() => handleEditPackage(pkg)}
                               className="p-1 text-violet-600 hover:text-violet-900 rounded-md hover:bg-violet-50"
-                              title="Chỉnh sửa gói"
+                              title="Edit package"
                             >
                               <Edit size={18} />
                             </button>
@@ -260,14 +260,14 @@ const VIPPackageManagement = () => {
                                   ? 'text-red-600 hover:text-red-900 hover:bg-red-50'
                                   : 'text-green-600 hover:text-green-900 hover:bg-green-50'
                                 }`}
-                              title={pkg.is_active ? 'Vô hiệu hóa gói' : 'Kích hoạt gói'}
+                              title={pkg.is_active ? 'Deactivate package' : 'Activate package'}
                             >
-                              {pkg.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                              {pkg.is_active ? 'Deactivate' : 'Activate'}
                             </button>
                             <button
                               onClick={() => handleDeletePackage(pkg)}
                               className="px-2 py-1 rounded-md text-xs font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
-                              title="Xóa gói"
+                              title="Delete package"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -284,7 +284,7 @@ const VIPPackageManagement = () => {
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                 <p className="text-sm text-gray-500">
-                  Hiển thị {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, packages.length)} / {packages.length} gói
+                  Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, packages.length)} of {packages.length} packages
                 </p>
                 <div className="flex items-center space-x-1">
                   <button

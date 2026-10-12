@@ -282,7 +282,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lemon Squeezy Variant ID
+              Lemon Squeezy Variant ID (optional)
             </label>
             <input
               type="text"
@@ -293,11 +293,11 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               placeholder="e.g. 123456"
             />
             <p className="mt-1 text-xs text-gray-400">
-              Lấy từ Lemon Squeezy Dashboard → Products → Variant ID. Bắt buộc để user có thể thanh toán.
+              From Lemon Squeezy Dashboard → Products → Variant ID. Only needed for Lemon Squeezy checkout; PayOS checkout does not use it.
             </p>
             {!formData.ls_variant_id && !isCreate && (
-              <p className="mt-1 text-xs text-amber-600 font-medium">
-                ⚠️ Chưa có Variant ID — gói này chưa thể thanh toán online
+              <p className="mt-1 text-xs text-gray-500">
+                No Variant ID — this package cannot be paid through Lemon Squeezy (PayOS is unaffected)
               </p>
             )}
           </div>
