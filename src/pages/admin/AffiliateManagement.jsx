@@ -10,6 +10,7 @@ const money = (n, cur) => {
     const d = (cur && cur.unit_divisor) || 1;
     const v = Number(n || 0) / d;
     const t = v.toLocaleString('vi-VN', d === 1 ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (cur && cur.currency === 'USD') return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     return `${t} ${(cur && cur.currency) || ''}`.trim();
 };
 // QR images live in R2 (absolute URL); older values may be relative.

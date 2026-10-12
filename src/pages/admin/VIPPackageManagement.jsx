@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Plus, Edit, AlertCircle, Home, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import PackageFormModal from '../../components/forms/PackageFormModal';
+import { vndAsUsd } from '../../utils/money';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
 import fetchWithTimeout from '../../utils/fetchWithTimeout';
@@ -66,7 +67,7 @@ const VIPPackageManagement = () => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN').format(price) + '₫';
+    return vndAsUsd(price);
   };
 
   const handleToggleStatus = async (pkg) => {
@@ -224,7 +225,6 @@ const VIPPackageManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatPrice(pkg.price)}
-                          {pkg.price_usd != null && <span className="block text-xs text-gray-400">shown as ${Number(pkg.price_usd).toFixed(2)}</span>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {pkg.ls_variant_id ? (

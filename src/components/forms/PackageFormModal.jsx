@@ -3,12 +3,15 @@ import { AlertCircle, Check, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API_BASE from '../../config/api';
 import fetchWithTimeout from '../../utils/fetchWithTimeout';
+import { vndToUsd, usdToVnd } from '../../utils/money';
 
 const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
+  // The form works in USD; the API stores the price in VND (what PayOS charges).
+  const originalUsd = packageData?.price ? vndToUsd(packageData.price) : 0;
   const [formData, setFormData] = useState({
     name: packageData?.name || '',
     duration_months: packageData?.duration_months || 1,
-    price: packageData?.price || 0,
+    price: originalUsd,
     description: packageData?.description || '',
     is_active: packageData?.is_active !== undefined ? packageData.is_active : true,
     package_type: packageData?.package_type || 'all_skills',
@@ -38,11 +41,11 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
       newErrors.duration_months = 'Duration must not exceed 36 months';
     }
 
-    // Price validation (VND)
+    // Price validation (USD)
     if (formData.price < 0) {
       newErrors.price = 'Price must not be negative';
-    } else if (formData.price > 100000000) {
-      newErrors.price = 'Price must not exceed 100,000,000 VND';
+    } else if (formData.price > 4000) {
+      newErrors.price = 'Price must not exceed $4,000';
     }
 
     // Description validation
@@ -94,7 +97,11 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
       const params = new URLSearchParams({
         name: formData.name,
         duration_months: formData.duration_months.toString(),
-        price: formData.price.toString(),
+        // Leave the stored VND price untouched unless the USD price was edited,
+        // so re-saving a package never shifts it by a rounding step.
+        price: (!isCreate && Number(formData.price) === originalUsd
+          ? packageData.price
+          : usdToVnd(formData.price)).toString(),
         package_type: formData.package_type,
         is_active: formData.is_active.toString()
       });
@@ -236,7 +243,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price (VND)*
+              Price (USD)*
             </label>
             <div className="relative">
               <input
@@ -246,22 +253,22 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
                 onChange={handleChange}
                 required
                 min="0"
-                step="1000"
+                step="0.01"
                 className={`w-full px-3 py-2 border ${errors.price ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent pr-12`}
               />
               <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                VND
+                USD
               </span>
             </div>
             {errors.price && (
               <p className="mt-1 text-xs text-red-500">{errors.price}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              PayOS charges this amount in VND. Customers see it in USD, converted at the fixed rate set on the server (USD_VND_RATE).
+              Customers see this USD price. PayOS charges the equivalent in VND, converted at the fixed rate set on the server (USD_VND_RATE).
             </p>
             {formData.price > 0 && (
               <p className="mt-1 text-xs text-gray-500">
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(formData.price)}
+                Charged as {new Intl.NumberFormat('en-US').format(usdToVnd(formData.price))} VND at checkout
               </p>
             )}
           </div>

@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
 import fetchWithTimeout from '../../utils/fetchWithTimeout';
+import { vndAsUsd } from '../../utils/money';
 
 const SubscriptionsList = () => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -219,7 +220,7 @@ const SubscriptionsList = () => {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">{parseInt(sub.package.price).toLocaleString('vi-VN')}₫</div>
+                      <div className="text-xs text-gray-500 mt-1">{vndAsUsd(sub.package.price)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
@@ -412,7 +413,7 @@ const SubscriptionsList = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Giá gói:</span>
-                    <span className="font-medium text-gray-900">{parseInt(selectedSub.package.price).toLocaleString('vi-VN')}₫</span>
+                    <span className="font-medium text-gray-900">{vndAsUsd(selectedSub.package.price)}</span>
                   </div>
                 </div>
               </div>
@@ -432,7 +433,7 @@ const SubscriptionsList = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-500">Số tiền:</span>
-                        <span className="font-medium text-green-600 font-semibold">{parseInt(selectedSub.transaction.amount).toLocaleString('vi-VN')}₫</span>
+                        <span className="font-medium text-green-600 font-semibold">{vndAsUsd(selectedSub.transaction.amount)}</span>
                       </div>
                       {selectedSub.transaction.payos_order_code && (
                         <div className="flex justify-between items-center">

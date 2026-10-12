@@ -5,6 +5,7 @@ import { UserCircle, RefreshCw, Users, Package, DollarSign, TrendingUp, Clock, A
 import { toast } from 'react-hot-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import API_BASE from '../config/api';
+import { vndAsUsd, vndToUsd, formatUsd } from '../utils/money';
 
 function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -208,12 +209,8 @@ function Dashboard() {
   };
 
   // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  // Amounts arrive in VND (what PayOS collected) and are shown in USD.
+  const formatCurrency = (amount) => vndAsUsd(amount);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -300,10 +297,10 @@ function Dashboard() {
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={
                         revenueTab === 'weekly'
-                          ? (revenueStats.weekly_revenue || []).map(d => ({ name: d.week_start.slice(5), revenue: d.revenue }))
+                          ? (revenueStats.weekly_revenue || []).map(d => ({ name: d.week_start.slice(5), revenue: vndToUsd(d.revenue) }))
                           : revenueTab === 'monthly'
-                            ? (revenueStats.monthly_revenue || []).map(d => ({ name: `T${d.month}`, revenue: d.revenue }))
-                            : (revenueStats.yearly_revenue || []).map(d => ({ name: `${d.year}`, revenue: d.revenue }))
+                            ? (revenueStats.monthly_revenue || []).map(d => ({ name: `T${d.month}`, revenue: vndToUsd(d.revenue) }))
+                            : (revenueStats.yearly_revenue || []).map(d => ({ name: `${d.year}`, revenue: vndToUsd(d.revenue) }))
                       } margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                         <defs>
                           <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -313,11 +310,11 @@ function Dashboard() {
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} tickFormatter={(v) => v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} tickFormatter={(v) => v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`} />
                         <Tooltip
                           contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '13px' }}
                           labelStyle={{ color: '#9ca3af', marginBottom: '4px' }}
-                          formatter={(value) => [formatCurrency(value), 'Doanh thu']}
+                          formatter={(value) => [formatUsd(value), 'Doanh thu']}
                         />
                         <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#revenueGradient)" />
                       </AreaChart>

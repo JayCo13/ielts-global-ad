@@ -12,6 +12,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import API_BASE from '../../config/api';
 import fetchWithTimeout from '../../utils/fetchWithTimeout';
+import { vndAsUsd } from '../../utils/money';
 
 const PendingTransactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -281,7 +282,7 @@ const PendingTransactions = () => {
                               <div className="text-sm text-gray-900">{tx.package_name}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tx.amount)}</div>
+                              <div className="text-sm text-gray-900">{vndAsUsd(tx.amount)}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">{tx.payment_method}</div>
@@ -513,7 +514,7 @@ const PendingTransactions = () => {
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700/30 p-2.5 rounded-md">
                       <p className="text-md font-medium text-gray-500 dark:text-gray-400">Số Tiền:</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentTransaction.amount)}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{vndAsUsd(currentTransaction.amount)}</p>
                     </div>
                   </div>
 
