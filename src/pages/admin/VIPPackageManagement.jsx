@@ -224,6 +224,7 @@ const VIPPackageManagement = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatPrice(pkg.price)}
+                          {pkg.price_usd != null && <span className="block text-xs text-gray-400">shown as ${Number(pkg.price_usd).toFixed(2)}</span>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {pkg.ls_variant_id ? (

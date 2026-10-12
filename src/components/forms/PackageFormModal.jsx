@@ -256,6 +256,9 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
             {errors.price && (
               <p className="mt-1 text-xs text-red-500">{errors.price}</p>
             )}
+            <p className="mt-1 text-xs text-gray-500">
+              PayOS charges this amount in VND. Customers see it in USD, converted at the fixed rate set on the server (USD_VND_RATE).
+            </p>
             {formData.price > 0 && (
               <p className="mt-1 text-xs text-gray-500">
                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(formData.price)}
