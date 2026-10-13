@@ -408,6 +408,7 @@ const SpeakingTopics = () => {
   const [form, setForm] = useState({});
   const [savingDetail, setSavingDetail] = useState(false);
   const [voices, setVoices] = useState([]);
+  const [ttsStatus, setTtsStatus] = useState(null);
   const [audioBusy, setAudioBusy] = useState(false);
   const [voice, setVoice] = useState('');
   const detailIdRef = useRef(null);
@@ -434,10 +435,11 @@ const SpeakingTopics = () => {
   useEffect(() => { fetchTopics(); }, [fetchTopics]);
 
   // Giọng lấy từ máy chủ để luôn khớp engine TTS đang chạy.
-  useEffect(() => {
+  const loadTts = useCallback(() => {
     fetch(`${API_BASE}/admin/speaking/tts/status`, { headers: authHeaders })
       .then((r) => r.json())
       .then((d) => {
+        setTtsStatus(d);
         const list = d.voice_catalog || (d.voices || []).map((n) => ({ name: n }));
         setVoices(list);
         setVoice((cur) => (list.some((v) => v.name === cur)
@@ -446,6 +448,7 @@ const SpeakingTopics = () => {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => { loadTts(); }, [loadTts]);
 
   // Generation runs in the background, so poll while anything is still working rather
   // than making staff hit refresh to find out whether a topic finished.
@@ -617,6 +620,7 @@ const SpeakingTopics = () => {
       if (!res.ok) throw new Error(data.detail || 'Chạy job thất bại');
       toast.success(`${name}: ${JSON.stringify(data)}`, { autoClose: 6000 });
       fetchTopics(true);
+      loadTts();
     } catch (e) { toast.error(e.message); }
     finally { setJobBusy(''); }
   };
@@ -649,6 +653,9 @@ const SpeakingTopics = () => {
               {[
                 ['Decay Forecast', '/forecast/decay', null],
                 ['Sinh nội dung còn chờ', '/jobs/generate-pending?retry_failed=true', null],
+                // Cả kho, gồm cả lời thoại cố định của giám khảo (câu chào khi chọn giọng) —
+                // nút "Sinh giọng đọc" trong từng topic không sinh phần này.
+                ['Sinh giọng đọc cả kho', '/tts/generate', null],
                 ['Dọn ghi âm cũ (chạy thử)', '/jobs/prune-audio?commit=false', null],
                 ['Dọn ghi âm cũ (xoá thật)', '/jobs/prune-audio?commit=true',
                   'Xoá thật các bản ghi âm cũ trên R2? Transcript và điểm vẫn được giữ.'],
@@ -659,7 +666,24 @@ const SpeakingTopics = () => {
                   {jobBusy === name && <Loader2 size={13} className="animate-spin" />} {name}
                 </button>
               ))}
+              <button onClick={loadTts} title="Cập nhật số clip giọng đọc"
+                      className="btn-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-[#0096b1] flex items-center gap-1">
+                <RefreshCw size={13} /> Giọng đọc
+              </button>
             </div>
+
+            {ttsStatus && (
+              <p className={`mb-4 text-xs ${ttsStatus.configured ? 'text-gray-500' : 'text-red-600'}`}>
+                Giọng đọc · engine {ttsStatus.engine}
+                {ttsStatus.configured ? '' : ' · CHƯA CẤU HÌNH KHOÁ cho engine này'}
+                {' · '}{ttsStatus.lines} câu cần đọc
+                {(ttsStatus.voices || []).map((v) => {
+                  const meta = (ttsStatus.voice_catalog || []).find((c) => c.name === v);
+                  return ` · ${(meta && meta.display) || v}: ${(ttsStatus.have || {})[v] || 0}/${ttsStatus.lines}`;
+                }).join('')}
+                {' · '}{ttsStatus.total_mb} MB
+              </p>
+            )}
 
             <div className="flex flex-wrap items-center gap-3 mb-5">
               <input value={q} onChange={(e) => setQ(e.target.value)}
