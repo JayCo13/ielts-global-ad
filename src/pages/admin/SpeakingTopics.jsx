@@ -618,7 +618,14 @@ const SpeakingTopics = () => {
       const res = await fetch(`${API_BASE}/admin/speaking${path}`, { method: 'POST', headers: authHeaders });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || 'Chạy job thất bại');
-      toast.success(`${name}: ${JSON.stringify(data)}`, { autoClose: 6000 });
+      // The voice job answers with a count, not a result: say what is happening in words.
+      if (path === '/tts/generate') {
+        toast.success(data.missing
+          ? `Đã bắt đầu sinh ${data.missing} clip giọng đọc (chạy nền). Bấm "Giọng đọc" để xem tiến độ.`
+          : 'Mọi câu đã có đủ giọng đọc.', { autoClose: 8000 });
+      } else {
+        toast.success(`${name}: ${JSON.stringify(data)}`, { autoClose: 6000 });
+      }
       fetchTopics(true);
       loadTts();
     } catch (e) { toast.error(e.message); }
