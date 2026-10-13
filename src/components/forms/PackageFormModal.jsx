@@ -198,9 +198,12 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
             >
-              <option value="all_skills">All Skills</option>
+              <option value="all_skills">Listening + Reading bundle</option>
               <option value="single_skill">Single Skill</option>
             </select>
+            <p className="mt-1 text-xs text-gray-500">
+              The bundle unlocks Listening and Reading only. Writing and Speaking are each sold as a "Single Skill" package.
+            </p>
           </div>
           
           {formData.package_type === 'single_skill' && (
@@ -219,6 +222,7 @@ const PackageFormModal = ({ onClose, onSuccess, isCreate, packageData }) => {
                 <option value="reading">Reading</option>
                 <option value="writing">Writing</option>
                 <option value="listening">Listening</option>
+                <option value="speaking">Speaking</option>
               </select>
             </div>
           )}

@@ -218,7 +218,7 @@ const VIPPackageManagement = () => {
                           <div className="text-sm font-medium text-gray-900 truncate" title={pkg.name}>{pkg.name}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {pkg.package_type === 'all_skills' ? 'All skills' : 'Single skill'}
+                          {pkg.package_type === 'all_skills' ? 'Listening + Reading' : 'Single skill'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {pkg.duration_months} mo
