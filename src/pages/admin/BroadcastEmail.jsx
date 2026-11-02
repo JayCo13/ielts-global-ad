@@ -22,6 +22,9 @@ function BroadcastEmail() {
   const [onlyTrusted, setOnlyTrusted] = useState(true);
   const [recipientStats, setRecipientStats] = useState(null);
   const [countLoading, setCountLoading] = useState(false);
+  const [maxRecipients, setMaxRecipients] = useState(''); // '' = everyone after filtering
+  const limit = parseInt(maxRecipients, 10) > 0 ? parseInt(maxRecipients, 10) : null;
+  const sendCount = recipientCount !== null && limit ? Math.min(recipientCount, limit) : recipientCount;
 
   // Status state
   const [sending, setSending] = useState(false);
@@ -169,8 +172,8 @@ function BroadcastEmail() {
       alert('Vui lòng nhập tiêu đề và nội dung email');
       return;
     }
-    const estimatedCost = recipientCount ? formatCostUSD(recipientCount * SES_COST_PER_EMAIL_USD) : '?';
-    if (!window.confirm(`Bạn có chắc chắn muốn gửi email đến ${recipientCount?.toLocaleString()} người dùng?\n\nChi phí AWS SES ước tính: ${estimatedCost}`)) return;
+    const estimatedCost = sendCount ? formatCostUSD(sendCount * SES_COST_PER_EMAIL_USD) : '?';
+    if (!window.confirm(`Bạn có chắc chắn muốn gửi email đến ${sendCount?.toLocaleString()} người dùng?\n\nChi phí AWS SES ước tính: ${estimatedCost}`)) return;
 
     setSending(true);
     try {
@@ -180,7 +183,7 @@ function BroadcastEmail() {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ subject, body_html: buildHtml(), target_filter: targetFilter, only_trusted: onlyTrusted })
+        body: JSON.stringify({ subject, body_html: buildHtml(), target_filter: targetFilter, only_trusted: onlyTrusted, max_recipients: limit })
       });
       if (res.ok) {
         fetchStatus();
@@ -365,6 +368,7 @@ function BroadcastEmail() {
                     <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/40 rounded-xl p-3 leading-relaxed">
                       Tổng {recipientStats.total.toLocaleString()} email · đã loại:
                       {' '}sai định dạng {recipientStats.bad_format}
+                      {' · '}đã hủy đăng ký / bị trả về / báo spam {recipientStats.suppressed ?? 0}
                       {' · '}mail tạm {recipientStats.disposable}
                       {' · '}địa chỉ ảo (test, noreply…) {recipientStats.placeholder}
                       {' · '}trùng hộp thư {recipientStats.duplicate}
@@ -372,12 +376,27 @@ function BroadcastEmail() {
                       {onlyTrusted && <>{' · '}không có dấu hiệu dùng thật {recipientStats.untrusted.toLocaleString()}</>}
                     </div>
                   )}
+                  <label className="mt-4 block">
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Giới hạn số người nhận</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                      Để trống = gửi tất cả. Có giới hạn thì gửi cho những người tương tác nhiều nhất trước (đã xác thực, đã mua, đã làm bài). Nên dùng 200–500 cho vài lần gửi đầu để làm ấm tên miền.
+                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={maxRecipients}
+                      onChange={(e) => setMaxRecipients(e.target.value)}
+                      placeholder="Tất cả"
+                      className="form-input w-40 rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600"
+                    />
+                  </label>
                   {!countLoading && recipientCount !== null && (
                     <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                      📧 Sẽ gửi đến <strong className="text-violet-600 dark:text-violet-400">{recipientCount.toLocaleString()}</strong> người dùng
+                      📧 Sẽ gửi đến <strong className="text-violet-600 dark:text-violet-400">{sendCount.toLocaleString()}</strong> người dùng
+                      {limit && limit < recipientCount && <> (trong {recipientCount.toLocaleString()} người đạt bộ lọc)</>}
                       {' · '}
                       <span title="SES list price: $0.10 / 1,000 emails">
-                        Chi phí ước tính: <strong className="text-violet-600 dark:text-violet-400">{formatCostUSD(recipientCount * SES_COST_PER_EMAIL_USD)}</strong>
+                        Chi phí ước tính: <strong className="text-violet-600 dark:text-violet-400">{formatCostUSD(sendCount * SES_COST_PER_EMAIL_USD)}</strong>
                       </span>
                     </p>
                   )}
@@ -497,7 +516,7 @@ function BroadcastEmail() {
                     className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Mail className="w-4 h-4" />
-                    {sending ? 'Đang khởi tạo...' : broadcastStatus?.active ? 'Đang có broadcast chạy...' : `Gửi đến ${recipientCount?.toLocaleString() || '...'} người`}
+                    {sending ? 'Đang khởi tạo...' : broadcastStatus?.active ? 'Đang có broadcast chạy...' : `Gửi đến ${sendCount?.toLocaleString() || '...'} người`}
                   </button>
                 </div>
 
