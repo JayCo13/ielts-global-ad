@@ -49,7 +49,6 @@ import SubscriptionsList from './pages/admin/SubscriptionsList';
 import PendingTransactions from './pages/admin/PendingTransactions';
 import DictationManagement from './pages/admin/DictationManagement';
 import ManagePartTitles from './pages/test/ManagePartTitles';
-import MarketingEmail from './pages/admin/MarketingEmail';
 
 function App() {
 
@@ -224,12 +223,8 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Marketing Email Broadcast */}
-        <Route path="/marketing-email" element={
-          <ProtectedRoute>
-            <MarketingEmail />
-          </ProtectedRoute>
-        } />
+        {/* Old Marketing Email page was removed; send through /broadcast-email */}
+        <Route path="/marketing-email" element={<Navigate to="/broadcast-email" replace />} />
         {/* Revenue analytics: day / month / quarter / year comparisons (ported from VN) */}
         <Route path="/revenue-analytics" element={
           <ProtectedRoute>
