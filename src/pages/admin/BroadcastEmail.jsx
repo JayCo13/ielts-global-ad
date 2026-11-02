@@ -19,6 +19,9 @@ function BroadcastEmail() {
   const [images, setImages] = useState([]); // [{url, filename, preview}]
   const [targetFilter, setTargetFilter] = useState('non_vip');
   const [recipientCount, setRecipientCount] = useState(null);
+  const [onlyTrusted, setOnlyTrusted] = useState(true);
+  const [recipientStats, setRecipientStats] = useState(null);
+  const [countLoading, setCountLoading] = useState(false);
 
   // Status state
   const [sending, setSending] = useState(false);
@@ -57,20 +60,24 @@ function BroadcastEmail() {
   // Fetch recipient count
   useEffect(() => {
     const fetchCount = async () => {
+      setCountLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/admin/email/recipients-count?target_filter=${targetFilter}`, {
+        const res = await fetch(`${API_BASE}/admin/email/recipients-count?target_filter=${targetFilter}&only_trusted=${onlyTrusted}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
         });
         if (res.ok) {
           const data = await res.json();
           setRecipientCount(data.count);
+          setRecipientStats(data.stats || null);
         }
       } catch (err) {
         console.error('Error fetching count:', err);
+      } finally {
+        setCountLoading(false);
       }
     };
     fetchCount();
-  }, [targetFilter]);
+  }, [targetFilter, onlyTrusted]);
 
   useEffect(() => {
     fetchStatus();
@@ -173,7 +180,7 @@ function BroadcastEmail() {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ subject, body_html: buildHtml(), target_filter: targetFilter })
+        body: JSON.stringify({ subject, body_html: buildHtml(), target_filter: targetFilter, only_trusted: onlyTrusted })
       });
       if (res.ok) {
         fetchStatus();
@@ -201,7 +208,7 @@ function BroadcastEmail() {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ subject, body_html: buildHtml(), target_filter: targetFilter })
+        body: JSON.stringify({ subject, body_html: buildHtml(), target_filter: targetFilter, only_trusted: onlyTrusted })
       });
       if (res.ok) {
         const data = await res.json();
@@ -337,7 +344,35 @@ function BroadcastEmail() {
                       </button>
                     ))}
                   </div>
-                  {recipientCount !== null && (
+                  <label className="mt-4 flex items-start gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={onlyTrusted}
+                      onChange={(e) => setOnlyTrusted(e.target.checked)}
+                      className="mt-0.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <strong>Chỉ gửi email đáng tin</strong>
+                      <span className="block text-xs text-gray-500 dark:text-gray-400">
+                        Email đã xác thực, đăng nhập Google, đã mua gói, đã làm bài, hoặc quay lại dùng web trong 180 ngày (sau ngày đăng ký).
+                      </span>
+                    </span>
+                  </label>
+                  {countLoading && (
+                    <p className="mt-3 text-sm text-gray-400">Đang lọc danh sách email...</p>
+                  )}
+                  {!countLoading && recipientStats && (
+                    <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/40 rounded-xl p-3 leading-relaxed">
+                      Tổng {recipientStats.total.toLocaleString()} email · đã loại:
+                      {' '}sai định dạng {recipientStats.bad_format}
+                      {' · '}mail tạm {recipientStats.disposable}
+                      {' · '}địa chỉ ảo (test, noreply…) {recipientStats.placeholder}
+                      {' · '}trùng hộp thư {recipientStats.duplicate}
+                      {' · '}tên miền không nhận mail {recipientStats.no_mail_server}
+                      {onlyTrusted && <>{' · '}không có dấu hiệu dùng thật {recipientStats.untrusted.toLocaleString()}</>}
+                    </div>
+                  )}
+                  {!countLoading && recipientCount !== null && (
                     <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                       📧 Sẽ gửi đến <strong className="text-violet-600 dark:text-violet-400">{recipientCount.toLocaleString()}</strong> người dùng
                       {' · '}
@@ -503,7 +538,11 @@ function BroadcastEmail() {
                             <td className="px-6 py-4">
                               <div className="font-bold text-gray-900 dark:text-white text-sm">{h.subject}</div>
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                {h.target_filter === 'non_vip' ? 'Chưa VIP' : h.target_filter === 'vip' ? 'VIP' : 'Tất cả'}
+                                {(() => {
+                                  const [base, flag] = (h.target_filter || '').split('+');
+                                  const label = base === 'non_vip' ? 'Chưa VIP' : base === 'vip' ? 'VIP' : 'Tất cả';
+                                  return flag === 'trusted' ? `${label} · chỉ email đáng tin` : label;
+                                })()}
                               </div>
                             </td>
                             <td className="px-6 py-4 text-center">{getStatusBadge(h.status)}</td>
