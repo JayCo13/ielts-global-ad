@@ -41,6 +41,149 @@ const downloadQr = async (absUrl, name) => {
     } catch (e) { window.open(absUrl, '_blank'); }
 };
 
+const pctText = (p) => `${Number(p).toLocaleString('vi-VN')}%`;
+
+/**
+ * Tỷ lệ hoa hồng riêng từng tài khoản (06/11). Mặc định 5% (global, 2026-11); mức riêng chỉ áp dụng cho
+ * đơn tạo SAU lúc lưu (backend ghi lịch sử, đơn cũ giữ tỷ lệ cũ).
+ */
+function CommissionRates() {
+    const [data, setData] = useState({ default_pct: 5, custom: [], results: [] });
+    const [q, setQ] = useState('');
+    const [edit, setEdit] = useState({});   // user_id -> chuỗi % đang gõ
+    const [busy, setBusy] = useState(null);
+    const [msg, setMsg] = useState('');
+    const [err, setErr] = useState('');
+    const [defEdit, setDefEdit] = useState('');
+
+    const load = useCallback(async (query) => {
+        setErr('');
+        try {
+            const d = await authed(`/admin/affiliate/rates${query ? `?q=${encodeURIComponent(query)}` : ''}`);
+            setData(d);
+        } catch (e) { setErr(e.message); }
+    }, []);
+    useEffect(() => { load(''); }, [load]);
+
+    const save = async (r, reset) => {
+        setErr(''); setMsg('');
+        let rate = null;
+        if (!reset) {
+            const raw = String(edit[r.user_id] ?? '').replace(',', '.').trim();
+            rate = Number(raw);
+            if (raw === '' || !Number.isFinite(rate) || rate < 0 || rate > 100) {
+                setErr('Nhập tỷ lệ từ 0 đến 100.'); return;
+            }
+        }
+        setBusy(r.user_id);
+        try {
+            await authed('/admin/affiliate/rates', { method: 'POST', body: JSON.stringify({ user_id: r.user_id, rate_pct: rate }) });
+            setMsg(reset ? `${r.username}: đã trả về mặc định ${pctText(data.default_pct)}`
+                : `${r.username}: đã đặt ${pctText(rate)} — áp dụng cho đơn phát sinh từ bây giờ`);
+            setEdit(e => ({ ...e, [r.user_id]: '' }));
+            await load(q);
+        } catch (e) { setErr(e.message); } finally { setBusy(null); }
+    };
+
+    const saveDefault = async () => {
+        setErr(''); setMsg('');
+        const rate = Number(String(defEdit).replace(',', '.').trim());
+        if (defEdit === '' || !Number.isFinite(rate) || rate < 0 || rate > 100) { setErr('Nhập tỷ lệ từ 0 đến 100.'); return; }
+        if (!window.confirm(`Đổi mức mặc định thành ${pctText(rate)} cho mọi tài khoản không có mức riêng (áp dụng cho đơn phát sinh từ bây giờ)?`)) return;
+        setBusy('default');
+        try {
+            await authed('/admin/affiliate/rates/default', { method: 'POST', body: JSON.stringify({ rate_pct: rate }) });
+            setMsg(`Mức mặc định: ${pctText(rate)} — áp dụng cho đơn phát sinh từ bây giờ`);
+            setDefEdit('');
+            await load(q);
+        } catch (e) { setErr(e.message); } finally { setBusy(null); }
+    };
+
+    const renderRow = (r) => (
+        <tr key={r.user_id}>
+            <td className="px-3 py-2">
+                <div className="font-medium text-gray-800 dark:text-gray-100">{r.username}</div>
+                <div className="text-xs text-gray-500">{r.email || '—'}{r.referral_code ? ` · mã ${r.referral_code}` : ''}</div>
+            </td>
+            <td className="px-3 py-2 text-right text-gray-600">{fmt(r.signups)}</td>
+            <td className="px-3 py-2 text-right">
+                {r.custom_pct != null
+                    ? <span className="font-semibold text-indigo-600">{pctText(r.custom_pct)}</span>
+                    : <span className="text-gray-500">{pctText(data.default_pct)} <span className="text-[11px]">(mặc định)</span></span>}
+                {r.since && <div className="text-[11px] text-gray-400">từ {new Date(r.since).toLocaleString('vi-VN')}</div>}
+            </td>
+            <td className="px-3 py-2">
+                <div className="flex items-center justify-end gap-2">
+                    <input value={edit[r.user_id] ?? ''} onChange={e => setEdit(x => ({ ...x, [r.user_id]: e.target.value }))}
+                        onKeyDown={e => e.key === 'Enter' && save(r, false)}
+                        inputMode="decimal" placeholder="%" className="form-input w-20 text-right py-1" />
+                    <button onClick={() => save(r, false)} disabled={busy === r.user_id}
+                        className="btn-sm bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50">Lưu</button>
+                    {r.custom_pct != null && (
+                        <button onClick={() => save(r, true)} disabled={busy === r.user_id}
+                            className="btn-sm border-gray-200 hover:border-gray-300 text-gray-600 whitespace-nowrap">Về mặc định</button>
+                    )}
+                </div>
+            </td>
+        </tr>
+    );
+
+    const renderTable = (rows) => (
+        <div className="overflow-x-auto">
+            <table className="table-auto w-full text-sm">
+                <thead className="text-xs uppercase text-gray-400 border-b border-gray-100 dark:border-gray-700/60">
+                    <tr>
+                        <th className="px-3 py-2 text-left">Tài khoản</th>
+                        <th className="px-3 py-2 text-right">Đã giới thiệu</th>
+                        <th className="px-3 py-2 text-right">Tỷ lệ hiện tại</th>
+                        <th className="px-3 py-2 text-right">Đặt tỷ lệ riêng</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
+                    {rows.map(renderRow)}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    return (
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700/60 p-4 mb-6">
+            <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                Tỷ lệ hoa hồng · mặc định <span className="text-indigo-600">{pctText(data.default_pct)}</span>
+            </div>
+            <div className="text-xs text-gray-500 mt-1 mb-3">
+                Tài khoản không được chỉnh sẽ theo mức mặc định. Tỷ lệ mới chỉ áp dụng cho đơn phát sinh sau lúc lưu;
+                đơn tạo trước đó vẫn tính theo tỷ lệ cũ.
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs text-gray-500">Đổi mức mặc định:</span>
+                <input value={defEdit} onChange={e => setDefEdit(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveDefault()}
+                    inputMode="decimal" placeholder="%" className="form-input w-20 text-right py-1" />
+                <button onClick={saveDefault} disabled={busy === 'default'}
+                    className="btn-sm border-gray-200 hover:border-gray-300 text-gray-600 disabled:opacity-50">Lưu mặc định</button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+                <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && load(q)}
+                    placeholder="Tìm tài khoản (tên, email hoặc mã giới thiệu)…" className="form-input w-full sm:flex-1" />
+                <button onClick={() => load(q)} className="btn bg-indigo-600 hover:bg-indigo-700 text-white">Tìm</button>
+            </div>
+            {msg && <div className="mt-3 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">{msg}</div>}
+            {err && <div className="mt-3 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{err}</div>}
+            {data.results.length > 0 && (
+                <div className="mt-3">
+                    <div className="text-xs font-semibold text-gray-500 mb-1">Kết quả tìm</div>
+                    {renderTable(data.results)}
+                </div>
+            )}
+            <div className="mt-4">
+                <div className="text-xs font-semibold text-gray-500 mb-1">Tài khoản đang có tỷ lệ riêng ({data.custom.length})</div>
+                {data.custom.length ? renderTable(data.custom)
+                    : <div className="text-sm text-gray-400">Chưa có — mọi tài khoản đang theo mức mặc định.</div>}
+            </div>
+        </div>
+    );
+}
+
 /**
  * Assign a referrer by hand (ported from the Vietnam admin), for accounts whose
  * referral code was lost at sign-up.
@@ -189,6 +332,58 @@ const STATUS = {
     rejected: { label: 'Bị từ chối', cls: 'text-red-600 bg-red-100' },
 };
 
+// Bảng top affiliate (2026-11): ai mang lại lượt nhấp, đăng ký, VIP, hoa hồng — để đánh giá hiệu quả creator.
+function Leaderboard() {
+    const [data, setData] = useState(null);
+    const [sort, setSort] = useState('commission');
+    const [err, setErr] = useState('');
+    useEffect(() => {
+        authed(`/admin/affiliate/leaderboard?sort=${sort}&limit=50`).then(setData).catch(e => setErr(e.message));
+    }, [sort]);
+    const cols = [['clicks', 'Lượt nhấp'], ['signups', 'Đăng ký TK'], ['vip', 'Đăng ký VIP'], ['commission', 'Hoa hồng']];
+    return (
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700/60 p-4 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div>
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">Top người giới thiệu</div>
+                    <div className="text-xs text-gray-500">Xếp theo cột đang chọn — dùng để đánh giá hiệu quả từng creator.</div>
+                </div>
+                <div className="flex gap-1">
+                    {cols.map(([k, l]) => (
+                        <button key={k} onClick={() => setSort(k)} className={`btn-sm ${sort === k ? 'bg-indigo-600 text-white' : 'border-gray-200 text-gray-600'}`}>{l}</button>
+                    ))}
+                </div>
+            </div>
+            {err && <div className="text-sm text-red-600 mb-2">{err}</div>}
+            <div className="overflow-x-auto">
+                <table className="table-auto w-full text-sm">
+                    <thead className="text-xs uppercase text-gray-400 border-b border-gray-100">
+                        <tr><th className="px-3 py-2 text-left">#</th><th className="px-3 py-2 text-left">Tài khoản</th>
+                            <th className="px-3 py-2 text-right">Lượt nhấp</th><th className="px-3 py-2 text-right">Đăng ký TK</th>
+                            <th className="px-3 py-2 text-right">Đăng ký VIP</th><th className="px-3 py-2 text-right">Tỷ lệ VIP/ĐK</th>
+                            <th className="px-3 py-2 text-right">Hoa hồng</th><th className="px-3 py-2 text-right">Số dư ví</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {(data?.items || []).map((r, i) => (
+                            <tr key={r.user_id}>
+                                <td className="px-3 py-2 text-gray-400">{i + 1}</td>
+                                <td className="px-3 py-2"><span className="font-medium text-gray-800 dark:text-gray-100">{r.username}</span><div className="text-xs text-gray-500">{r.email}</div></td>
+                                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.clicks)}</td>
+                                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.signups)}</td>
+                                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.vip_buyers)}</td>
+                                <td className="px-3 py-2 text-right tabular-nums text-gray-500">{r.signups ? `${r.conversion_pct}%` : '—'}</td>
+                                <td className="px-3 py-2 text-right tabular-nums font-semibold text-emerald-600">{money(r.commission, data)}</td>
+                                <td className="px-3 py-2 text-right tabular-nums text-gray-600">{money(r.balance, data)}</td>
+                            </tr>
+                        ))}
+                        {data && !data.items.length && <tr><td colSpan={8} className="px-3 py-6 text-center text-gray-400">Chưa có dữ liệu giới thiệu.</td></tr>}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
 function AffiliateManagement() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [overview, setOverview] = useState(null);
@@ -296,6 +491,10 @@ function AffiliateManagement() {
                             ))}
                         </div>
 
+
+                        <Leaderboard />
+
+                        <CommissionRates />
 
                         <ManualAttribution cur={overview} />
 

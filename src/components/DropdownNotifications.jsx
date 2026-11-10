@@ -31,6 +31,8 @@ function DropdownNotifications({ align }) {
       navigate('/admin/speaking-submissions');
     } else if (notification.type === 'exam_completion') {
       navigate('/admin/exam-results');
+    } else if (notification.type === 'creator_hub') {
+      navigate('/creator-program');
     }
 
     // Mark notification as read when clicked

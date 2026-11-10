@@ -22,6 +22,7 @@ import Login from './pages/auth/Login';
 import Feedback from './pages/data/Feedback';
 import ErrorReports from './pages/admin/ErrorReports';
 import Announcements from './pages/admin/Announcements';
+import CreatorProgram from './pages/admin/CreatorProgram';
 import BroadcastEmail from './pages/admin/BroadcastEmail';
 import RevenueAnalytics from './pages/admin/RevenueAnalytics';
 import AffiliateManagement from './pages/admin/AffiliateManagement';
@@ -241,6 +242,12 @@ function App() {
         <Route path="/affiliate" element={
           <ProtectedRoute>
             <AffiliateManagement />
+          </ProtectedRoute>
+        } />
+        {/* "Work With Us" UGC creator program: applications, video/creator cards, countries */}
+        <Route path="/creator-program" element={
+          <ProtectedRoute>
+            <CreatorProgram />
           </ProtectedRoute>
         } />
 
