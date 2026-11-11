@@ -3,7 +3,7 @@ import Sidebar from '../../partials/Sidebar';
 import Header from '../../partials/Header';
 import { API_BASE } from '../../config/api';
 import { countryName, ALL_COUNTRY_CODES } from '../../data/countries';
-import { HubAccess, HubCreators, HubChannels, HubReconciliations, HubEarnings } from './CreatorHubAdmin';
+import { HubAccess, HubCreators, HubChannels, HubReconciliations, HubEarnings, HubLeaderboard } from './CreatorHubAdmin';
 
 // "Work With Us" (UGC creator program) admin: applications from /work-with-us,
 // video cards, creator cards, and which countries the sign-up form offers.
@@ -420,7 +420,7 @@ function Settings() {
 
 const TABS = [
     ['apps', 'Đơn đăng ký'], ['access', 'Quyền Creator Hub'], ['overview', 'Tổng quan creator'],
-    ['channels', 'Kênh'], ['recon', 'Đối soát views'], ['earnings', 'Thu nhập creator'],
+    ['channels', 'Kênh'], ['recon', 'Đối soát views'], ['earnings', 'Thu nhập creator'], ['leaderboard', 'Bảng xếp hạng'],
     ['videos', 'Video creator (landing)'], ['creators', 'Creator tiêu biểu (landing)'], ['settings', 'Cài đặt'],
 ];
 
@@ -450,6 +450,7 @@ export default function CreatorProgram() {
                         {tab === 'channels' && <HubChannels />}
                         {tab === 'recon' && <HubReconciliations />}
                         {tab === 'earnings' && <HubEarnings />}
+                        {tab === 'leaderboard' && <HubLeaderboard />}
                         {tab === 'videos' && <Videos />}
                         {tab === 'creators' && <Creators />}
                         {tab === 'settings' && <Settings />}

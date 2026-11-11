@@ -424,12 +424,13 @@ export function HubReconciliations() {
                         <div className="text-sm">Tạm tính: <b className="text-emerald-600">{usd(r.estimated_usd)}</b>
                             {r.approved_units != null && <span className="text-xs text-gray-500"> · đã cộng ví {money(r.approved_units, data)} (GD #{r.wallet_tx_id || '—'})</span>}</div>
                     </div>
+                    <SubmitGap r={r} />
                     <div className="overflow-x-auto">
                         <table className="table-auto w-full text-sm">
                             <thead className="text-xs uppercase text-gray-400 border-b border-gray-100">
                                 <tr><th className="px-2 py-1 text-left">Kênh</th><th className="px-2 py-1 text-left">Loại</th><th className="px-2 py-1 text-right">Tổng đã duyệt kỳ trước</th>
                                     <th className="px-2 py-1 text-right">Tổng khai báo</th><th className="px-2 py-1 text-left">Tính đến</th><th className="px-2 py-1 text-right">Views kỳ này</th>
-                                    <th className="px-2 py-1 text-right">Mức thưởng</th><th className="px-2 py-1 text-right">Tạm tính</th></tr>
+                                    <th className="px-2 py-1 text-right">Mức thưởng</th><th className="px-2 py-1 text-right">Tạm tính</th><th className="px-2 py-1 text-left">Bằng chứng</th></tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {r.items.map(it => (
@@ -443,6 +444,11 @@ export function HubReconciliations() {
                                         <td className="px-2 py-1 text-right tabular-nums font-semibold">{num(it.period_views)}</td>
                                         <td className="px-2 py-1 text-right text-xs">${it.rate_per_k}/1K</td>
                                         <td className="px-2 py-1 text-right tabular-nums">{usd(it.estimated_usd)}</td>
+                                        <td className="px-2 py-1 text-xs whitespace-nowrap">
+                                            {(it.proof_urls || []).length
+                                                ? it.proof_urls.map((u, i) => <a key={u} href={u} target="_blank" rel="noreferrer" className="mr-2 text-indigo-600 hover:underline">{/\.(mp4|mov|webm)$/i.test(u) ? '🎬' : '🖼️'} {i + 1}</a>)
+                                                : <span className="text-gray-400">—</span>}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -459,6 +465,124 @@ export function HubReconciliations() {
                 </Card>
             ))}
             {!data.items.length && <Card><div className="text-center text-gray-400 text-sm py-4">Không có yêu cầu đối soát.</div></Card>}
+        </div>
+    );
+}
+
+// Feedback 2026-11-10: previous submission / this submission / days between (anti-spam check).
+const MIN_GAP_DAYS = 20;
+function SubmitGap({ r }) {
+    const gap = r.days_since_previous;
+    const short = gap != null && gap < MIN_GAP_DAYS;
+    return (
+        <div className={`mb-2 flex flex-wrap gap-x-5 gap-y-1 rounded-lg px-3 py-2 text-xs ${short ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-600'}`}>
+            <span>Lần gửi gần nhất trước đó: <b>{r.previous_submitted_at ? dt(r.previous_submitted_at) : 'chưa có (lần đầu)'}</b></span>
+            <span>Lần gửi này: <b>{dt(r.submitted_at)}</b></span>
+            <span>Cách nhau: <b>{gap == null ? '—' : `${Math.floor(gap)} ngày`}</b>{short && ` (dưới ${MIN_GAP_DAYS} ngày)`}</span>
+        </div>
+    );
+}
+
+// ── Leaderboard (feedback 2026-11-10) ───────────────────────────────────────
+// Default order = official rank (VIP/views → sign-ups/views → views). Clicking a header:
+// 1st DESC (name A→Z), 2nd ASC (name Z→A), 3rd back to the official order. Sorting never changes rank.
+const LB_COLS = [
+    ['name', 'Tên creator', 'left'], ['total_views', 'Tổng views'], ['views_reward', 'Thưởng views'],
+    ['affiliate_commission', 'Hoa hồng affiliate'], ['total_reward', 'Tổng tiền thưởng'],
+    ['signup_rate', 'Tỷ lệ ĐK TK / views'], ['vip_rate', 'Tỷ lệ ĐK VIP / views'],
+];
+const pct = (v) => `${Number(v || 0).toLocaleString('vi-VN', { maximumFractionDigits: 4 })}%`;
+const monthLabel = (m) => { const [y, mo] = (m || '').split('-'); return y ? `Tháng ${Number(mo)}/${y}` : ''; };
+
+export function HubLeaderboard() {
+    const [period, setPeriod] = useState('lifetime');
+    const [month, setMonth] = useState('');
+    const [sorts, setSorts] = useState({ lifetime: null, monthly: null });
+    const [data, setData] = useState(null);
+    const [err, setErr] = useState('');
+    const [detail, setDetail] = useState(null);
+
+    useEffect(() => {
+        setErr('');
+        const p = new URLSearchParams({ period });
+        if (period === 'monthly' && month) p.set('month', month);
+        authed(`/admin/creator-hub/leaderboard?${p}`)
+            .then((d) => { setData(d); if (period === 'monthly' && !month && d.month) setMonth(d.month); })
+            .catch((e) => setErr(e.message));
+    }, [period, month]);
+
+    const sort = sorts[period];
+    const clickHead = (key) => setSorts((s) => {
+        const cur = s[period];
+        let next;
+        if (!cur || cur.key !== key) next = { key, dir: 1 };
+        else if (cur.dir === 1) next = { key, dir: 2 };
+        else next = null;
+        return { ...s, [period]: next };
+    });
+    const rows = [...(data?.items || [])];
+    if (sort) {
+        rows.sort((a, b) => {
+            if (sort.key === 'name') {
+                const c = a.name.localeCompare(b.name, 'vi');
+                return sort.dir === 1 ? c : -c;
+            }
+            const c = (b[sort.key] || 0) - (a[sort.key] || 0);
+            return (sort.dir === 1 ? c : -c) || a.rank - b.rank;
+        });
+    }
+    const arrow = (key) => (sort?.key !== key ? '↕' : key === 'name' ? (sort.dir === 1 ? 'A→Z' : 'Z→A') : (sort.dir === 1 ? '↓' : '↑'));
+
+    return (
+        <div className="space-y-3">
+            <Card>
+                <div className="flex flex-wrap items-center gap-2">
+                    {[['lifetime', 'Tổng hợp (Lifetime)'], ['monthly', 'Theo tháng (Monthly)']].map(([k, l]) => (
+                        <button key={k} onClick={() => setPeriod(k)} className={`btn-sm ${period === k ? 'bg-indigo-600 text-white' : 'border-gray-200 text-gray-600'}`}>{l}</button>
+                    ))}
+                    {period === 'monthly' && (
+                        <select value={month} onChange={(e) => setMonth(e.target.value)} className="form-select py-1 ml-2">
+                            {(data?.months || []).map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
+                        </select>
+                    )}
+                </div>
+                <div className="text-xs text-gray-500 mt-2">Tổng tiền thưởng = Thưởng views + Hoa hồng affiliate. Thứ hạng chính thức: tỷ lệ ĐK VIP/views → tỷ lệ ĐK tài khoản/views → tổng views. Bấm tiêu đề cột để sắp xếp (lần 1 giảm dần, lần 2 tăng dần, lần 3 về thứ hạng mặc định) — sắp xếp không đổi thứ hạng.</div>
+            </Card>
+            <Err err={err} />
+            <Card>
+                <div className="overflow-x-auto">
+                    <table className="table-auto w-full text-sm">
+                        <thead className="text-xs uppercase text-gray-400 border-b border-gray-100">
+                            <tr>
+                                <th className="px-2 py-2 text-left">STT</th>
+                                <th className="px-2 py-2 text-left">Hạng</th>
+                                {LB_COLS.map(([k, l, align]) => (
+                                    <th key={k} className={`px-2 py-2 ${align === 'left' ? 'text-left' : 'text-right'}`}>
+                                        <button onClick={() => clickHead(k)} className={`uppercase hover:text-indigo-600 ${sort?.key === k ? 'text-indigo-600' : ''}`}>{l} <span className="normal-case">{arrow(k)}</span></button>
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {rows.map((r, i) => (
+                                <tr key={r.user_id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setDetail(r.user_id)}>
+                                    <td className="px-2 py-2 tabular-nums">{i + 1}</td>
+                                    <td className="px-2 py-2 tabular-nums text-gray-500">#{r.rank}</td>
+                                    <td className="px-2 py-2"><div className="font-medium">{r.name}</div><div className="text-[11px] text-gray-400">{r.username}{r.email ? ` · ${r.email}` : ''}</div></td>
+                                    <td className="px-2 py-2 text-right tabular-nums">{num(r.total_views)}</td>
+                                    <td className="px-2 py-2 text-right tabular-nums">{money(r.views_reward, data)}</td>
+                                    <td className="px-2 py-2 text-right tabular-nums">{money(r.affiliate_commission, data)}</td>
+                                    <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-600">{money(r.total_reward, data)}</td>
+                                    <td className="px-2 py-2 text-right tabular-nums">{pct(r.signup_rate)} <span className="text-[11px] text-gray-400">({num(r.signups)})</span></td>
+                                    <td className="px-2 py-2 text-right tabular-nums">{pct(r.vip_rate)} <span className="text-[11px] text-gray-400">({num(r.vip_buyers)})</span></td>
+                                </tr>
+                            ))}
+                            {data && !rows.length && <tr><td colSpan={9} className="px-3 py-6 text-center text-gray-400">{period === 'monthly' ? 'Chưa có số liệu trong tháng này.' : 'Chưa có creator.'}</td></tr>}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+            {detail && <CreatorDetail userId={detail} onClose={() => setDetail(null)} />}
         </div>
     );
 }

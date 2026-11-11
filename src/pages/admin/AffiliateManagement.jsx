@@ -416,12 +416,14 @@ function AffiliateManagement() {
         let body;
         if (action === 'reject') {
             const reason = window.prompt(
-                'Nhập lý do từ chối (sẽ hiển thị cho user để họ sửa & gửi lại, vd: "Email PayPal không nhận được tiền").\nSố tiền sẽ được hoàn lại vào ví của user.'
+                'Nhập lý do từ chối (sẽ hiển thị cho user để họ sửa & gửi lại, vd: "Email PayPal không nhận được tiền").\nSố tiền sẽ được hoàn lại vào ví của user và hệ thống gửi email báo lý do cho creator.'
             );
             if (reason === null) return;            // user cancelled
             if (!reason.trim()) { alert('Vui lòng nhập lý do từ chối.'); return; }
             body = JSON.stringify({ reason: reason.trim() });
         }
+        // 2026-11-10: marking paid / rejecting now emails the creator, so confirm first.
+        if (action === 'paid' && !window.confirm('Xác nhận đã chuyển tiền cho yêu cầu này?\nHệ thống sẽ gửi email báo "đã thanh toán" cho creator.')) return;
         setBusy(true);
         try {
             await authed(`/admin/affiliate/withdrawals/${id}/${action}`, { method: 'POST', body });
