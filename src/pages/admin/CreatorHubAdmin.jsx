@@ -81,7 +81,7 @@ function CreatorDetail({ userId, onClose }) {
                             <div key={c.id} className="flex flex-wrap gap-2 items-center py-1 border-b border-gray-50">
                                 <Pill map={CH_ST} v={c.status} /> <b>{c.platform_label}</b>
                                 <a href={c.channel_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">{c.channel_name} ↗</a>
-                                <span className="text-xs text-gray-500">views đã duyệt: {num(c.approved_total_views)}</span>
+                                <span className="text-xs text-gray-500">views ban đầu: {num(c.initial_views)} · views đã duyệt: {num(c.approved_total_views)}</span>
                                 {c.status_reason && <span className="text-xs text-red-500">Lý do: {c.status_reason}</span>}
                             </div>
                         ))}
@@ -346,7 +346,7 @@ export function HubChannels() {
                                     </td>
                                     <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{dt(c.registered_at)}</td>
                                     <td className="px-3 py-2"><Pill map={CH_ST} v={c.status} />{c.status_reason && <div className="text-[11px] text-red-500 mt-1">Lý do: {c.status_reason}</div>}</td>
-                                    <td className="px-3 py-2 text-right tabular-nums">{num(c.approved_total_views)}</td>
+                                    <td className="px-3 py-2 text-right tabular-nums">{num(c.approved_total_views)}<div className="text-[11px] text-gray-400">ban đầu: {num(c.initial_views)}</div></td>
                                     <td className="px-3 py-2 whitespace-nowrap">
                                         {(c.status === 'pending' || c.status === 'rejected') && <button onClick={() => act(c, 'approve')} className="btn-xs bg-green-600 hover:bg-green-700 text-white mr-1">Duyệt</button>}
                                         {c.status === 'pending' && <button onClick={() => act(c, 'reject')} className="btn-xs border-gray-200 text-red-500 mr-1">Từ chối</button>}
@@ -487,7 +487,7 @@ function SubmitGap({ r }) {
 // Default order = official rank (VIP/views → sign-ups/views → views). Clicking a header:
 // 1st DESC (name A→Z), 2nd ASC (name Z→A), 3rd back to the official order. Sorting never changes rank.
 const LB_COLS = [
-    ['name', 'Tên creator', 'left'], ['total_views', 'Tổng views'], ['views_reward', 'Thưởng views'],
+    ['name', 'Tên creator', 'left'], ['channel_count', 'Kênh'], ['total_views', 'Tổng views'], ['views_reward', 'Thưởng views'],
     ['affiliate_commission', 'Hoa hồng affiliate'], ['total_reward', 'Tổng tiền thưởng'],
     ['signup_rate', 'Tỷ lệ ĐK TK / views'], ['vip_rate', 'Tỷ lệ ĐK VIP / views'],
 ];
@@ -501,6 +501,7 @@ export function HubLeaderboard() {
     const [data, setData] = useState(null);
     const [err, setErr] = useState('');
     const [detail, setDetail] = useState(null);
+    const [chRow, setChRow] = useState(null);
 
     useEffect(() => {
         setErr('');
@@ -569,6 +570,10 @@ export function HubLeaderboard() {
                                     <td className="px-2 py-2 tabular-nums">{i + 1}</td>
                                     <td className="px-2 py-2 tabular-nums text-gray-500">#{r.rank}</td>
                                     <td className="px-2 py-2"><div className="font-medium">{r.name}</div><div className="text-[11px] text-gray-400">{r.username}{r.email ? ` · ${r.email}` : ''}</div></td>
+                                    <td className="px-2 py-2 text-right">
+                                        <button disabled={!r.channel_count} onClick={(e) => { e.stopPropagation(); setChRow(r); }}
+                                            className="tabular-nums font-semibold text-indigo-600 hover:underline disabled:text-gray-400 disabled:no-underline">{num(r.channel_count)}</button>
+                                    </td>
                                     <td className="px-2 py-2 text-right tabular-nums">{num(r.total_views)}</td>
                                     <td className="px-2 py-2 text-right tabular-nums">{money(r.views_reward, data)}</td>
                                     <td className="px-2 py-2 text-right tabular-nums">{money(r.affiliate_commission, data)}</td>
@@ -577,12 +582,40 @@ export function HubLeaderboard() {
                                     <td className="px-2 py-2 text-right tabular-nums">{pct(r.vip_rate)} <span className="text-[11px] text-gray-400">({num(r.vip_buyers)})</span></td>
                                 </tr>
                             ))}
-                            {data && !rows.length && <tr><td colSpan={9} className="px-3 py-6 text-center text-gray-400">{period === 'monthly' ? 'Chưa có số liệu trong tháng này.' : 'Chưa có creator.'}</td></tr>}
+                            {data && !rows.length && <tr><td colSpan={10} className="px-3 py-6 text-center text-gray-400">{period === 'monthly' ? 'Chưa có số liệu trong tháng này.' : 'Chưa có creator.'}</td></tr>}
                         </tbody>
                     </table>
                 </div>
             </Card>
             {detail && <CreatorDetail userId={detail} onClose={() => setDetail(null)} />}
+            {chRow && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setChRow(null)}>
+                    <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+                            <b>Kênh của {chRow.name}</b>
+                            <button onClick={() => setChRow(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+                        </div>
+                        <div className="max-h-[60vh] overflow-auto p-5">
+                            <table className="w-full text-sm">
+                                <thead className="text-xs uppercase text-gray-400"><tr>
+                                    <th className="text-left pb-2">Tên kênh</th><th className="text-left pb-2">Nền tảng</th>
+                                    <th className="text-right pb-2">Tổng views</th><th className="text-right pb-2">Link kênh</th>
+                                </tr></thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {chRow.channels.map((c) => (
+                                        <tr key={c.channel_url}>
+                                            <td className="py-2 pr-2 font-medium">{c.channel_name}</td>
+                                            <td className="py-2 pr-2">{c.platform_label}</td>
+                                            <td className="py-2 text-right tabular-nums">{num(c.total_views)}</td>
+                                            <td className="py-2 pl-2 text-right"><a href={c.channel_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Mở ↗</a></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
