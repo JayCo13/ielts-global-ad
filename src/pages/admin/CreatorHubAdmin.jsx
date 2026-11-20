@@ -153,6 +153,15 @@ export function HubAccess() {
         try { await authed(`/admin/creator-hub/access/${u.user_id}`, { method: 'POST', body: JSON.stringify({ enabled: enable, note }) }); await load(); }
         catch (e) { setErr(e.message); }
     };
+    // Discount Permission: ON = buyers referred by this creator get 5% off their first VIP order
+    const toggleDiscount = async (u) => {
+        const enable = !u.discount_enabled;
+        if (!window.confirm(enable
+            ? `Bật giảm giá 5% cho link / mã của ${u.username}? Khách mua qua link hoặc nhập mã của creator này được giảm 5% đơn VIP đầu tiên.`
+            : `Tắt giảm giá 5% của ${u.username}? Link / mã vẫn hoạt động và creator vẫn nhận hoa hồng, chỉ khách không được giảm giá nữa.`)) return;
+        try { await authed(`/admin/creator-hub/access/${u.user_id}/discount`, { method: 'POST', body: JSON.stringify({ enabled: enable }) }); await load(); }
+        catch (e) { setErr(e.message); }
+    };
     const showLogs = async (u) => {
         if (logs[u.user_id]) { setLogs(l => ({ ...l, [u.user_id]: null })); return; }
         try { const r = await authed(`/admin/creator-hub/access/${u.user_id}/logs`); setLogs(l => ({ ...l, [u.user_id]: r })); }
@@ -165,6 +174,7 @@ export function HubAccess() {
                 <div className="text-xs text-gray-500 mb-3">
                     Mặc định mọi tài khoản đều <b>tắt</b> Creator Hub. Duyệt đơn sẽ tự mở; admin cũng có thể cấp trực tiếp cho bất kỳ tài khoản nào.
                     Tắt quyền chỉ ẩn Creator Hub — không xoá kênh, đối soát, ví hay lịch sử giao dịch.
+                    Cột <b>Giảm giá 5%</b> (mặc định tắt) độc lập với quyền Hub và hoa hồng: bật thì khách mua qua link / mã của creator được giảm 5% đơn VIP đầu tiên.
                 </div>
                 <div className="flex flex-wrap gap-2 mb-3">
                     {[['', 'Có hồ sơ / đơn'], ['enabled', 'Đang mở Hub']].map(([k, l]) => (
@@ -180,7 +190,7 @@ export function HubAccess() {
                     <table className="table-auto w-full text-sm">
                         <thead className="text-xs uppercase text-gray-400 border-b border-gray-100">
                             <tr><th className="px-3 py-2 text-left">Tài khoản</th><th className="px-3 py-2 text-left">SĐT</th><th className="px-3 py-2 text-left">Đơn creator</th>
-                                <th className="px-3 py-2 text-left">Creator Hub</th><th className="px-3 py-2 text-left">Hồ sơ</th><th className="px-3 py-2 text-left">Ngày mở</th><th /></tr>
+                                <th className="px-3 py-2 text-left">Creator Hub</th><th className="px-3 py-2 text-left">Hồ sơ</th><th className="px-3 py-2 text-left">Ngày mở</th><th className="px-3 py-2 text-left">Giảm giá 5%</th><th /></tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {data.items.map(u => (
@@ -195,6 +205,13 @@ export function HubAccess() {
                                         </td>
                                         <td className="px-3 py-2 text-xs">{u.hub_access || u.registration_complete ? (u.registration_complete ? 'Completed' : 'Incomplete') : '—'}</td>
                                         <td className="px-3 py-2 text-xs text-gray-500">{day(u.enabled_at)}</td>
+                                        <td className="px-3 py-2">
+                                            <button onClick={() => toggleDiscount(u)} role="switch" aria-checked={!!u.discount_enabled} title={u.discount_enabled ? 'Đang bật — bấm để tắt' : 'Đang tắt — bấm để bật'}
+                                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${u.discount_enabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${u.discount_enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                            </button>
+                                            <div className={`text-[11px] ${u.discount_enabled ? 'text-green-600' : 'text-gray-400'}`}>{u.discount_enabled ? 'ON' : 'OFF'}</div>
+                                        </td>
                                         <td className="px-3 py-2 whitespace-nowrap">
                                             <button onClick={() => toggle(u)} className={`btn-xs ${u.hub_access ? 'border-gray-200 text-red-500' : 'bg-green-600 hover:bg-green-700 text-white'}`}>{u.hub_access ? 'Thu hồi' : 'Cấp quyền'}</button>
                                             <button onClick={() => showLogs(u)} className="btn-xs border-gray-200 text-gray-600 ml-1">Lịch sử</button>
@@ -202,7 +219,7 @@ export function HubAccess() {
                                         </td>
                                     </tr>
                                     {logs[u.user_id] && (
-                                        <tr><td colSpan={7} className="px-3 pb-3 text-xs text-gray-600">
+                                        <tr><td colSpan={8} className="px-3 pb-3 text-xs text-gray-600">
                                             {logs[u.user_id].length ? logs[u.user_id].map((l, i) => (
                                                 <div key={i}>{dt(l.created_at)} · <b>{l.action === 'enable' ? 'Mở' : 'Tắt'}</b> · {SOURCE[l.source] || l.source}{l.actor && ` · bởi ${l.actor}`}{l.note && ` · ${l.note}`}</div>
                                             )) : 'Chưa có lịch sử.'}
@@ -210,7 +227,7 @@ export function HubAccess() {
                                     )}
                                 </React.Fragment>
                             ))}
-                            {!data.items.length && <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-400">Không có tài khoản nào.</td></tr>}
+                            {!data.items.length && <tr><td colSpan={8} className="px-3 py-6 text-center text-gray-400">Không có tài khoản nào.</td></tr>}
                         </tbody>
                     </table>
                 </div>
@@ -379,6 +396,8 @@ export function HubReconciliations() {
     const [q, setQ] = useState('');
     const [err, setErr] = useState('');
     const [busy, setBusy] = useState(null);
+    // Individual Video Bonus: per submission, the video ids the admin unticked (= reject).
+    const [unticked, setUnticked] = useState({});
 
     const load = useCallback(async () => {
         setErr('');
@@ -394,7 +413,16 @@ export function HubReconciliations() {
     const act = async (r, action) => {
         let body = {};
         if (action === 'reject') { const reason = askReason(`Lý do từ chối đối soát #${r.id} của ${r.username}:`); if (!reason) return; body = { reason }; }
-        if (action === 'approve' && !window.confirm(`Duyệt đối soát #${r.id} và cộng ${usd(r.estimated_usd)} vào ví của ${r.username}? (chỉ cộng 1 lần)`)) return;
+        if (action === 'approve') {
+            const off = unticked[r.id] || [];
+            const pending = (r.videos || []).filter(v => v.status === 'pending');
+            const okVids = pending.filter(v => !off.includes(v.id));
+            const amount = r.views_reward_usd == null ? r.estimated_usd
+                : (r.views_reward_usd || 0) + (r.tier_bonus_usd || 0) + okVids.reduce((t, v) => t + (v.reward_usd || 0), 0);
+            const vidNote = pending.length ? ` (duyệt ${okVids.length}/${pending.length} video)` : '';
+            if (!window.confirm(`Duyệt đối soát #${r.id} và cộng ${usd(amount)} vào ví của ${r.username}${vidNote}? (chỉ cộng 1 lần)`)) return;
+            body = { approved_video_ids: okVids.map(v => v.id) };
+        }
         setBusy(r.id);
         try { await authed(`/admin/creator-hub/reconciliations/${r.id}/${action}`, { method: 'POST', body: JSON.stringify(body) }); await load(); }
         catch (e) { setErr(e.message); } finally { setBusy(null); }
@@ -425,12 +453,14 @@ export function HubReconciliations() {
                             {r.approved_units != null && <span className="text-xs text-gray-500"> · đã cộng ví {money(r.approved_units, data)} (GD #{r.wallet_tx_id || '—'})</span>}</div>
                     </div>
                     <SubmitGap r={r} />
+                    <BonusSummary r={r} />
                     <div className="overflow-x-auto">
                         <table className="table-auto w-full text-sm">
                             <thead className="text-xs uppercase text-gray-400 border-b border-gray-100">
                                 <tr><th className="px-2 py-1 text-left">Kênh</th><th className="px-2 py-1 text-left">Loại</th><th className="px-2 py-1 text-right">Tổng đã duyệt kỳ trước</th>
                                     <th className="px-2 py-1 text-right">Tổng khai báo</th><th className="px-2 py-1 text-left">Tính đến</th><th className="px-2 py-1 text-right">Views kỳ này</th>
-                                    <th className="px-2 py-1 text-right">Mức thưởng</th><th className="px-2 py-1 text-right">Tạm tính</th><th className="px-2 py-1 text-left">Bằng chứng</th></tr>
+                                    <th className="px-2 py-1 text-right">Mức thưởng</th><th className="px-2 py-1 text-right">Tạm tính</th>
+                                    <th className="px-2 py-1 text-right">Views tháng / thưởng mốc</th><th className="px-2 py-1 text-left">Bằng chứng</th></tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {r.items.map(it => (
@@ -444,6 +474,10 @@ export function HubReconciliations() {
                                         <td className="px-2 py-1 text-right tabular-nums font-semibold">{num(it.period_views)}</td>
                                         <td className="px-2 py-1 text-right text-xs">${it.rate_per_k}/1K</td>
                                         <td className="px-2 py-1 text-right tabular-nums">{usd(it.estimated_usd)}</td>
+                                        <td className="px-2 py-1 text-right tabular-nums text-xs whitespace-nowrap">
+                                            {it.tier_views == null ? <span className="text-gray-400">—</span>
+                                                : <>{num(it.tier_views)} · <b className="text-emerald-600">{usd(it.tier_bonus_usd)}</b></>}
+                                        </td>
                                         <td className="px-2 py-1 text-xs whitespace-nowrap">
                                             {(it.proof_urls || []).length
                                                 ? it.proof_urls.map((u, i) => <a key={u} href={u} target="_blank" rel="noreferrer" className="mr-2 text-indigo-600 hover:underline">{/\.(mp4|mov|webm)$/i.test(u) ? '🎬' : '🖼️'} {i + 1}</a>)
@@ -454,6 +488,11 @@ export function HubReconciliations() {
                             </tbody>
                         </table>
                     </div>
+                    <VideoReview r={r} off={unticked[r.id] || []}
+                        onToggle={(id) => setUnticked(u => {
+                            const cur = u[r.id] || [];
+                            return { ...u, [r.id]: cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id] };
+                        })} />
                     {r.reject_reason && <div className="text-xs text-red-500 mt-2">Lý do từ chối: {r.reject_reason}</div>}
                     {['submitted', 'under_review'].includes(r.status) && (
                         <div className="flex gap-2 mt-3">
@@ -465,6 +504,47 @@ export function HubReconciliations() {
                 </Card>
             ))}
             {!data.items.length && <Card><div className="text-center text-gray-400 text-sm py-4">Không có yêu cầu đối soát.</div></Card>}
+        </div>
+    );
+}
+
+// Bonus policy 2026-11-19: views reward after the monthly cap + per-channel tier bonus + videos.
+function BonusSummary({ r }) {
+    if (r.views_reward_usd == null) return null;    // submitted before the policy
+    const capped = (r.views_reward_raw_usd || 0) - (r.views_reward_usd || 0) > 0.004;
+    const nVid = (r.videos || []).length;
+    return (
+        <div className="mb-2 flex flex-wrap gap-x-5 gap-y-1 rounded-lg bg-emerald-50/60 px-3 py-2 text-xs text-gray-700">
+            <span>Thưởng views: <b>{usd(r.views_reward_usd)}</b>
+                {capped && <span className="text-amber-700"> (chạm trần tháng, gốc {usd(r.views_reward_raw_usd)})</span>}</span>
+            <span>Thưởng mốc theo kênh: <b>{usd(r.tier_bonus_usd)}</b></span>
+            <span>Video: <b>{nVid}</b> link × {usd(r.video_reward_usd)}</span>
+        </div>
+    );
+}
+
+const VID_ST = {
+    pending: ['Chờ duyệt', 'text-amber-700 bg-amber-100'], approved: ['Đã duyệt', 'text-green-700 bg-green-100'],
+    rejected: ['Không duyệt', 'text-red-600 bg-red-100'], returned: ['Trả lại (đối soát bị từ chối)', 'text-gray-600 bg-gray-100'],
+};
+function VideoReview({ r, off, onToggle }) {
+    const vids = r.videos || [];
+    if (!vids.length) return null;
+    const open = ['submitted', 'under_review'].includes(r.status);
+    return (
+        <div className="mt-3">
+            <div className="text-xs font-semibold uppercase text-gray-400 mb-1">Individual Video Bonus · {vids.length} video
+                {open && <span className="normal-case font-normal"> — bỏ tick video không hợp lệ trước khi duyệt</span>}</div>
+            <div className="space-y-1">
+                {vids.map(v => (
+                    <label key={v.id} className="flex items-center gap-2 text-sm">
+                        {open && v.status === 'pending'
+                            ? <input type="checkbox" className="form-checkbox" checked={!off.includes(v.id)} onChange={() => onToggle(v.id)} />
+                            : <Pill map={VID_ST} v={v.status} />}
+                        <a href={v.url} target="_blank" rel="noreferrer" className="truncate text-indigo-600 hover:underline">{v.url} ↗</a>
+                    </label>
+                ))}
+            </div>
         </div>
     );
 }
@@ -689,6 +769,87 @@ export function HubEarnings() {
                     </table>
                 </div>
             </Card>
+        </div>
+    );
+}
+
+
+// ── Bonus settings (policy 2026-11-19) ──────────────────────────────────────
+// Creators don't see tiers / amounts; new values apply to submissions sent from now on.
+export function HubBonusSettings() {
+    const [cfg, setCfg] = useState(null);
+    const [err, setErr] = useState('');
+    const [msg, setMsg] = useState('');
+    const [busy, setBusy] = useState(false);
+    const load = useCallback(async () => {
+        setErr('');
+        try { setCfg(await authed('/admin/creator-hub/bonus-settings')); } catch (e) { setErr(e.message); }
+    }, []);
+    useEffect(() => { load(); }, [load]);
+    if (!cfg) return <><Err err={err} /><Card><div className="text-sm text-gray-400">Đang tải…</div></Card></>;
+
+    const set = (k, v) => { setMsg(''); setCfg({ ...cfg, [k]: v }); };
+    const setTier = (i, j, v) => set('tiers', cfg.tiers.map((t, x) => (x === i ? (j === 0 ? [v, t[1]] : [t[0], v]) : t)));
+    const save = async () => {
+        setBusy(true); setErr(''); setMsg('');
+        try {
+            const body = {
+                tiers: cfg.tiers.filter(t => String(t[0]).trim() !== '').map(t => [Number(t[0]), Number(t[1])]),
+                tier_max_usd: Number(cfg.tier_max_usd), video_min_views: Number(cfg.video_min_views),
+                video_reward_usd: Number(cfg.video_reward_usd), monthly_cap_usd: Number(cfg.monthly_cap_usd),
+            };
+            const saved = await authed('/admin/creator-hub/bonus-settings', { method: 'PUT', body: JSON.stringify(body) });
+            setCfg({ ...cfg, ...saved });
+            setMsg('Đã lưu. Áp dụng cho các lần gửi đối soát từ bây giờ.');
+        } catch (e) { setErr(e.message); } finally { setBusy(false); }
+    };
+    const field = 'form-input w-36 py-1 text-right';
+    return (
+        <div className="space-y-4 max-w-3xl">
+            <Err err={err} />
+            <Card>
+                <h3 className="font-semibold text-gray-800 dark:text-gray-100">Monthly Total Views Bonus per Channel</h3>
+                <p className="text-xs text-gray-500 mt-1 mb-3">Tính riêng từng kênh theo tổng views trong tháng. Chỉ trả mức của mốc cao nhất đạt được (không cộng dồn mốc, không cộng views giữa các kênh).</p>
+                <table className="text-sm">
+                    <thead className="text-xs uppercase text-gray-400"><tr><th className="text-left pr-3 pb-1">Tổng views / kênh / tháng</th><th className="text-left pr-3 pb-1">Thưởng (USD)</th><th /></tr></thead>
+                    <tbody>
+                        {cfg.tiers.map((t, i) => (
+                            <tr key={i}>
+                                <td className="pr-3 py-1"><input inputMode="numeric" className={field} value={t[0]} onChange={e => setTier(i, 0, e.target.value.replace(/[^\d]/g, ''))} /></td>
+                                <td className="pr-3 py-1"><input inputMode="decimal" className={field} value={t[1]} onChange={e => setTier(i, 1, e.target.value.replace(/[^\d.]/g, ''))} /></td>
+                                <td><button onClick={() => set('tiers', cfg.tiers.filter((_, x) => x !== i))} className="text-xs text-red-500 hover:underline">Xóa</button></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {cfg.tiers.length < (cfg.max_tiers || 15) && (
+                    <button onClick={() => set('tiers', [...cfg.tiers, ['', '']])} className="btn-sm border-gray-200 text-indigo-600 mt-2">+ Thêm mốc</button>
+                )}
+                <div className="mt-4 flex items-center gap-3 text-sm">
+                    <span>Thưởng tối đa mỗi kênh mỗi tháng (USD)</span>
+                    <input inputMode="decimal" className={field} value={cfg.tier_max_usd} onChange={e => set('tier_max_usd', e.target.value.replace(/[^\d.]/g, ''))} />
+                </div>
+            </Card>
+            <Card>
+                <h3 className="font-semibold text-gray-800 dark:text-gray-100">Individual Video Bonus</h3>
+                <div className="mt-3 grid gap-3 text-sm">
+                    <label className="flex items-center gap-3"><span className="w-72">Số views tối thiểu để video đủ điều kiện</span>
+                        <input inputMode="numeric" className={field} value={cfg.video_min_views} onChange={e => set('video_min_views', e.target.value.replace(/[^\d]/g, ''))} /></label>
+                    <label className="flex items-center gap-3"><span className="w-72">Thưởng mỗi video hợp lệ (USD)</span>
+                        <input inputMode="decimal" className={field} value={cfg.video_reward_usd} onChange={e => set('video_reward_usd', e.target.value.replace(/[^\d.]/g, ''))} /></label>
+                </div>
+            </Card>
+            <Card>
+                <h3 className="font-semibold text-gray-800 dark:text-gray-100">Monthly Total Views Bonus Cap</h3>
+                <p className="text-xs text-gray-500 mt-1 mb-3">Trần cho thưởng views (kênh chính + tất cả kênh phụ) mỗi creator mỗi tháng. Không ảnh hưởng thưởng mốc và thưởng video.</p>
+                <label className="flex items-center gap-3 text-sm"><span className="w-72">Mức trần (USD / creator / tháng)</span>
+                    <input inputMode="decimal" className={field} value={cfg.monthly_cap_usd} onChange={e => set('monthly_cap_usd', e.target.value.replace(/[^\d.]/g, ''))} /></label>
+            </Card>
+            <div className="flex items-center gap-3">
+                <button disabled={busy} onClick={save} className="btn bg-indigo-600 hover:bg-indigo-700 text-white">{busy ? 'Đang lưu…' : 'Lưu cấu hình thưởng'}</button>
+                {msg && <span className="text-sm text-green-600">{msg}</span>}
+            </div>
+            <p className="text-xs text-gray-500">Cấu hình mới chỉ áp dụng cho các lần gửi đối soát tiếp theo; các khoản đã tính/đã duyệt không thay đổi.</p>
         </div>
     );
 }
