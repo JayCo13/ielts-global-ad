@@ -796,7 +796,8 @@ export function HubBonusSettings() {
             const body = {
                 tiers: cfg.tiers.filter(t => String(t[0]).trim() !== '').map(t => [Number(t[0]), Number(t[1])]),
                 tier_max_usd: Number(cfg.tier_max_usd), video_min_views: Number(cfg.video_min_views),
-                video_reward_usd: Number(cfg.video_reward_usd), monthly_cap_usd: Number(cfg.monthly_cap_usd),
+                video_reward_usd: Number(cfg.video_reward_usd), video_max_per_month: Number(cfg.video_max_per_month ?? 30),
+                monthly_cap_usd: Number(cfg.monthly_cap_usd),
             };
             const saved = await authed('/admin/creator-hub/bonus-settings', { method: 'PUT', body: JSON.stringify(body) });
             setCfg({ ...cfg, ...saved });
@@ -837,6 +838,8 @@ export function HubBonusSettings() {
                         <input inputMode="numeric" className={field} value={cfg.video_min_views} onChange={e => set('video_min_views', e.target.value.replace(/[^\d]/g, ''))} /></label>
                     <label className="flex items-center gap-3"><span className="w-72">Thưởng mỗi video hợp lệ (USD)</span>
                         <input inputMode="decimal" className={field} value={cfg.video_reward_usd} onChange={e => set('video_reward_usd', e.target.value.replace(/[^\d.]/g, ''))} /></label>
+                    <label className="flex items-center gap-3"><span className="w-72">Số video tối đa mỗi creator mỗi tháng</span>
+                        <input inputMode="numeric" className={field} value={cfg.video_max_per_month ?? 30} onChange={e => set('video_max_per_month', e.target.value.replace(/[^\d]/g, ''))} /></label>
                 </div>
             </Card>
             <Card>
